@@ -9,7 +9,8 @@ PROCESS alumnos [id:1..P]{
     <alumnos = alumnos + 1>
     <await alumnos == P>
     examenes[id] = 1
-    <entregados[contador] = id>
+    <contador = contador + 1>
+    entregados[contador] = id
     <await notas[id] != 0 >
 }
 
@@ -18,8 +19,8 @@ PROCESS profes [id:0..3]{
     while(corregidos < P){
         <await corregidos != contador;
         corregidos = corregidos + 1>
-        examen = examenes[entregados[contador]]
-        notas[entregados[contador]] = 1
+        examen = examenes[entregados[corregidos - 2]]
+        notas[entregados[corregidos - 2]] = 1
     }
 }
 
