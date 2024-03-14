@@ -81,16 +81,17 @@ le indica a cada persona cuando puede usar la impresora.
 
 cola c;
 int ok[0..N] = 0;
-int espera[0..N] = 0;
+boolean ocupado = false;
+
 process persona[id: 0..N]{
     <encolar(c, edad, id);>
     <await (ok[id] == 1)>
     imprimir(documento)
     ocupado = false;
+    ok[id] = 0;
 }
 
 process coordinador{
-    ocupado = false;
     while(true){
         <await(not empty(c))>
         <await(not ocupado)>
