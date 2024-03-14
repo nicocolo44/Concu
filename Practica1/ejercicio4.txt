@@ -86,9 +86,9 @@ boolean ocupado = false;
 process persona[id: 0..N]{
     <encolar(c, edad, id);>
     <await (ok[id] == 1)>
+    ok[id] = 0;
     imprimir(documento)
     ocupado = false;
-    ok[id] = 0;
 }
 
 process coordinador{
