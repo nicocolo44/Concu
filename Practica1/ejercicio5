@@ -1,0 +1,26 @@
+int alumnos = 0;
+int notas[0..P];
+int examenes[0..P];
+int contador = 0;
+int corregidos = 0;
+int entregados[0..P];
+
+PROCESS alumnos [id:1..P]{
+    <alumnos = alumnos + 1>
+    <await alumnos == P>
+    examenes[id] = 1
+    <entregados[contador] = id>
+    <await notas[id] != 0 >
+}
+
+PROCESS profes [id:0..3]{
+    <await alumnos == P>
+    while(corregidos < P){
+        <await corregidos != contador;
+        corregidos = corregidos + 1>
+        examen = examenes[entregados[contador]]
+        notas[entregados[contador]] = 1
+    }
+}
+
+
