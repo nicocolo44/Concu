@@ -1,0 +1,22 @@
+int SC[0..N] = 0;
+int permiso[0..N] = 0;
+
+
+process worker[id: 1..N]{
+    SC[id] = 1;
+    <await permiso[id] == 1>
+    //uso SC
+    SC[id] = 0;
+}
+
+process coordinator{
+    while(true){
+        for(i = 0; i<N; i++){
+            if(SC[i] == 1){
+                permiso[i] == 1;
+                <await SC[i] == 0;
+                permiso[i] = 0;>   
+            }
+        }
+    }
+}
