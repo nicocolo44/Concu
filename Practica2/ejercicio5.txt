@@ -1,0 +1,60 @@
+5. Se debe simular una maratón con C corredores donde en la llegada hay UNA máquinas
+expendedoras de agua con capacidad para 20 botellas. Además existe un repositor encargado
+de reponer las botellas de la máquina. Cuando los C corredores han llegado al inicio comienza
+la carrera. Cuando un corredor termina la carrera se dirigen a la máquina expendedora, espera
+su turno (respetando el orden de llegada), saca una botella y se retira. Si encuentra la máquina
+sin botellas, le avisa al repositor para que cargue nuevamente la máquina con 20 botellas; espera
+a que se haga la recarga; saca una botella y se retira. Nota: maximizar la concurrencia; mientras
+se reponen las botellas se debe permitir que otros corredores se encolen.
+
+int cantBot = 20;
+int cantCorr = 0;
+sem barrera = 0;
+sem mutex = 1;
+cola C;
+sem mutexCola = 1;
+boolean agarrandoAgua = false;
+sem miTurno[1..C] = [C]0
+sem faltanBotellas = 0; repusoBotellas = 0;
+
+process corredor[id: 1..C]{
+    int aux;
+    P(mutex)                                        //Entro a SC de cantCorr
+    cantCorr = cantCorr + 1;
+    if(cantCorr == C){
+        for(i: 1..C) V(barrera);                    //Si ya llegaron todos libero la barrera
+        V(barrera);                                 //Podría hacer que el repositor no empiece a preguntar por su semaforo hasta que haya empezado la carrera, no sé si tiene sentido
+    }
+    V(mutex);                                       //Salgo de SC
+    P(Barrera);                                     //Espero a que liberen la barrera
+    delay(20);                                      //Corro la carrera
+    P(mutexCola);                                   //Entro a SC de la fila para tomar agua
+    if(Empty(c) && !agarrandoAgua){                 //Si no hay nadie en la fila y nadie agarrandoAgua
+        agarrandoAgua = true;                       //Aviso que alguien va a agarrar agua
+        V(miTurno[id])                              //Me habilito el turno a mi mismo
+    }else{
+        encolar(c, id);                             //Sino me pongo en la fila
+    }
+    V(mutexCola);                                   // salgo de la SC
+    P(miTurno[id]);                                 //Espero a que sea mi turno
+    if(cantBot == 0){ 
+        V(faltanBotellas);                          //Si no hay botellas aviso al repositor
+        P(repusoBotellas);                          //Espero que el repositor me avise que ya terminó de reponer las botellas
+    }
+    cantBot = cantBot - 1;                          //Agarro mi botella
+    if(!Empty(c)){ 
+        desencolar(c, aux);                         //Si hay alguien en la cola, lo desencolo
+        V(miTurno[aux]);                            //Le aviso que es su turno
+    }else{
+        agarrandoAgua = false;                      //Sino marco que no hayu nadie que esté agarrando agua
+    }
+}
+
+process repositor{
+    while(true){
+        P(barrera)                                  //Lo explique arriba (No se si tiene sentido esperar a la barrera)
+        P(faltanBotellas);                          //Espero a que me avisen que no hay botellas 
+        cantBot = 20;                               //Repongo (no entro a SC, porque nadie podría acceder a cantBot si no hay botellas)
+        V(repusoBotellas);                          //Le aviso al que me está esperando que ya las repuse
+    }
+}

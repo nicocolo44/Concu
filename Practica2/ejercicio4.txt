@@ -49,10 +49,11 @@ process Persona[id: 1..N]{
     P(puedoImprimir(id))                            //Espero a que me den el permiso
     Fotocopiar();                                   //Fotocopio
     P(mutex);                                       //Entro a SC
-    fotocopiando = false;                           //Aviso que dejé de fotocopiar
     if(!Empty(C)){                                  //Me fijo si hay alguien en la cola
         pop(C, aux);                                //Lo saco al primero de la cola
         V(puedoImprimir[id]);                       //Le aviso que puede imprimir
+    }else{
+        fotocopiando = false                        //Aviso que no hay nadie fotocopiando
     }
     V(mutex);                                       //Salgo de SC
 }
@@ -79,10 +80,11 @@ process Persona[id: 1..N]{
     P(puedoImprimir(id))                            //Espero a que me den el permiso
     Fotocopiar();                                   //Fotocopio
     P(mutex);                                       //Entro a SC
-    fotocopiando = false;                           //Aviso que dejé de fotocopiar
     if(!Empty(C)){                                  //Me fijo si hay alguien en la cola
         Desencolar(C,edad, aux);                    //Lo saco al primero de la cola, teniendo en cuenta las  prioridades
         V(puedoImprimir[id]);                       //Le aviso que puede imprimir
+    }else{
+        fotocopiando = false                        //Aviso que no hay nadie fotocopiando
     }
     V(mutex);                                       //Salgo de SC
 }
