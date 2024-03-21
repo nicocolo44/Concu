@@ -156,14 +156,14 @@ sem mutexRec = 1;
 process Personas[id: 1..N]{
     P(mutex);                                               //Entro a SC por la cola
     push(c, id);                                            //Me agrego a la cola
-    V(mutex);                                                //Salgo de SC
+    V(mutex);                                               //Salgo de SC
     V(llegue);                                              //aviso que llegué
     P(puedoImprimir(id))                                    //espero a que me dejen imprimir
     Fotocopiar(fotoAUsar[id]);                              //Fotocopio en la impresora que me toca
-    P(mutexRec);
-    push(rec, fotoAUsar[id])   
-    V(mutexRec);                             
-    V(cantImpresoras)                                       //Aviso al coordinador que terminé
+    P(mutexRec);                                            //Entro a SC de la cola REC 
+    push(rec, fotoAUsar[id])                                //Devuelvo el recurso a la cola
+    V(mutexRec);                                            //Salgo de SC de la cola REC
+    V(cantImpresoras)                                       //Aviso al coordinador que terminé y que ya devolví el recurso
 }
 
 
