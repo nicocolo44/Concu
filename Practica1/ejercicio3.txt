@@ -5,12 +5,12 @@ usa y cuando termina de usarla la vuelve a depositar.
 
 cola colaRec;
 
-process xd{
+process noxd{
     while(true){
-        <await Empty(colaRec);
-        rec = Sacar(colaRec)>
+        <await !Empty(colaRec);
+        Sacar(colaRec, rec)>
         //USO RECURSO
-        Encolar(C, rec);
+        <Encolar(C, rec);>
     }
 }
 
