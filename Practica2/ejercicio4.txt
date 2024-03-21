@@ -159,9 +159,9 @@ process Personas[id: 1..N]{
     V(mutex);                                                //Salgo de SC
     V(llegue);                                              //aviso que llegué
     P(puedoImprimir(id))                                    //espero a que me dejen imprimir
-    Fotocopiar(fotoAUsar(id));                              //Fotocopio en la impresora que me toca
+    Fotocopiar(fotoAUsar[id]);                              //Fotocopio en la impresora que me toca
     P(mutexRec);
-    push(rec, fotoAUsar(id))   
+    push(rec, fotoAUsar[id])   
     V(mutexRec);                             
     V(cantImpresoras)                                       //Aviso al coordinador que terminé
 }
