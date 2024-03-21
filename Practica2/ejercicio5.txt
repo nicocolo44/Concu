@@ -42,12 +42,14 @@ process corredor[id: 1..C]{
         P(repusoBotellas);                          //Espero que el repositor me avise que ya terminó de reponer las botellas
     }
     cantBot = cantBot - 1;                          //Agarro mi botella
+    P(mutexCola); 
     if(!Empty(c)){ 
         desencolar(c, aux);                         //Si hay alguien en la cola, lo desencolo
         V(miTurno[aux]);                            //Le aviso que es su turno
     }else{
         agarrandoAgua = false;                      //Sino marco que no hayu nadie que esté agarrando agua
     }
+    V(mutexCola)
 }
 
 process repositor{
