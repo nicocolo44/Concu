@@ -1,0 +1,28 @@
+En una herrería hay 15 empleados que forman 5 grupos de 3 personas; los grupos se forman
+de acuerdo al orden de llegada (los 3 primeros pertenecen al grupo 1, los 3 siguientes al grupo
+2, y así sucesivamente). Ni bien conoce el grupo al que pertenece el empleado comienza a
+trabajar (no debe esperar al resto de grupo para comenzar). Cada grupo debe hacer
+exactamente P unidades de un producto (cada unidad es hecha por un único empleado). Al
+terminar de hacer las P unidades de un grupo, sus 3 empleados se retiran. Nota: maximizar
+la concurrencia; ningún grupo puede hacer unidades de más.
+
+int cant = 0;
+sem mutex = 1;
+int grupo[1..15]; //No sé si esta variable hacerla interna a cada proceso
+sem permiso[1..5] = [5]1;
+int cantProd[1..5] = [5]0;
+
+process empleado[id: 1..15]{
+    P(mutex);                                       //Entro a SC
+    cant = cant + 1;                                //Sumo que llegué
+    grupo[id] = cant / 5 + 1;                       //Divido de forma entera por 5 y me quedo con ese numero como grupo
+    V(mutex);                                       //Libero SC
+    P(permiso[grupo[id]]);                          //Entro a SC de mi grupo
+    while(permiso[grupo[id]]<P){                    //Me fijo si todavía no hicimos/se estan haciendo todos los productos
+        cantProd[grupo[id]]++;                      //Aviso que voy a hacer uno más
+        V(permiso[grupo[id]]);                      //Salgo de SC del grupo
+        delay(20);                                  //Hago el producto
+        P(permiso[grupo[id]]);                      //Entro a SC de mi grupo nuevamente
+    }
+    V(permiso[grupo[id]]);                          //Salgo de la SC (que me quedé metido en la ultima iteración dell while) y me retiro
+}
