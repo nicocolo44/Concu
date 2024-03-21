@@ -1,0 +1,16 @@
+sem rec = 5;
+cola c = {rec1, rec2, rec3, rec4, rec5}
+sem mutex = 1;
+
+process worker[1..N]{
+    P(rec);
+    P(mutex);
+    rec = desencolar(c);
+    V(mutex);
+    //Uso el recurso;
+    P(mutex);
+    encolar(c,rec);
+    V(mutex);
+    V(rec);
+}
+

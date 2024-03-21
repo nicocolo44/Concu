@@ -1,0 +1,51 @@
+3. Se tiene un curso con 40 alumnos, la maestra entrega una tarea distinta a cada alumno, luego
+cada alumno realiza su tarea y se la entrega a la maestra para que la corrija, esta revisa la tarea
+y si está bien le avisa al alumno que puede irse, si la tarea está mal le indica los errores, el
+alumno corregirá esos errores y volverá a entregarle la tarea a la maestra para que realice la
+corrección nuevamente, esto se repite hasta que la tarea no tenga errores.
+
+sem barrera = 0, mutex = 1, despProfe = 0;
+int cant = 0;
+boolean correcciones[1..40] = [40]false
+sem corregido[1..40] = [40]0
+cola c;
+sem entregue = 0;
+
+
+
+process alu[id: 1..40]{
+    P(mutex);
+    cant = cant + 1;
+    if(cant == 40){
+        for(i= 1..40) V(barrera)                                                //HICE UNA BARRERA PARA PRACTICARLA
+        V(despProfe)
+    }
+    V(mutex)
+    P(barrera)
+    while(!correcciones[id]){                                                   //Hago el while mientras no esté corregido o la  correccion haya tenido errores
+            //HACEN SU PARCIAL generando examen E
+            delay(30);
+            P(mutex);                                                           //Entro a SC de la cola
+            push(c, (id, E));
+            V(mutex);
+            V(entregue);                                                        //Le aviso al profe que alguien entregó
+            P(corregido[id])                                                    //Espero a que el profe me avise que mi examen ya está corregido
+    }
+
+}
+
+process profe{
+    int aux; examen E;
+    int cantEntregados = 0;
+    P(despProfe);                                                               //Espero a que me despierten en la barrera
+    while(cantEntregados<40){                                                   //quede algún estudiante por entregar
+        P(entregue);                                                            //Espero a que algún estudiante entregue
+        P(mutex);                                                               //entro a SC porque quiero modificar la cola (No se si es necesario hacerlo en un POP, creo que sí)
+        pop(c, (aux, E));
+        V(mutex);
+        //Corrigo examen poniendole un valor True or false a correcciones[aux]
+        correcciones[aux] = estaBien ? true:false;                              //Me inventé la notacion
+        V(corregido[aux]);                                                      //Le aviso al respectivo alumno que está corregido el parcial
+        if(correcciones[aux]) cantEntregados= cantEntregados + 1                //Si el examen está completamente bien lo marco como entregado       
+    }
+}
