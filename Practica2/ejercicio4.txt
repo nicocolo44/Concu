@@ -1,0 +1,98 @@
+4. Existen N personas que deben fotocopiar un documento cada una. Resolver cada ítem
+usando semáforos:
+a) Implemente una solución suponiendo que existe una única fotocopiadora compartida
+por todas las personas, y las mismas la deben usar de a una persona a la vez, sin importar
+el orden. Existe una función Fotocopiar() llamada por la persona que simula el uso de la
+fotocopiadora. Sólo se deben usar los procesos que representan a las Personas.
+b) Modifique la solución de (a) para el caso en que se deba respetar el orden de llegada.
+c) Modifique la solución de (b) para el caso en que se deba dar prioridad de acuerdo a la
+edad de cada persona (cuando la fotocopiadora está libre la debe usar la persona de mayor
+edad entre las que estén esperando para usarla).
+d) Modifique la solución de (a) para el caso en que se deba respetar estrictamente el orden
+dado por el identificador del proceso (la persona X no puede usar la fotocopiadora hasta
+que no haya terminado de usarla la persona X-1).
+e) Modifique la solución de (b) para el caso en que además haya un Empleado que le indica
+a cada persona cuando debe usar la fotocopiadora.
+f) Modificar la solución (e) para el caso en que sean 10 fotocopiadoras. El empleado le indica
+a la persona cuando puede usar una fotocopiadora, y cual debe usar.
+
+
+// A ----------------------------------------------------------------------------
+a) Implemente una solución suponiendo que existe una única fotocopiadora compartida
+por todas las personas, y las mismas la deben usar de a una persona a la vez, sin importar
+el orden. Existe una función Fotocopiar() llamada por la persona que simula el uso de la
+fotocopiadora. Sólo se deben usar los procesos que representan a las Personas.
+sem mutex = 1;
+
+process Personas[id: 1..N]{
+    P(mutex);
+    fotocopiar();
+    V(mutex);
+}
+
+//B -----------------------------------------------------------------------------
+b) Modifique la solución de (a) para el caso en que se deba respetar el orden de llegada.
+sem mutex = 1;
+sem llegue= 0;
+sem puedoImprimir[1..40] = [40]0;
+sem termine = 0;
+cola C;
+
+process Personas[id: 1..N]{
+    P(mutex);                                               //Entro a SC por la cola
+    push(c, id);                                            //Me agrego a la cola
+    V(mutex)                                                //Salgo de SC
+    V(llegue);                                              //aviso que llegué
+    P(puedoImprimir(id))                                    //espero a que me dejen imprimir
+    Fotocopiar()                                            //Fotocopio
+    V(termine)                                              //Aviso al coordinador que terminé
+}
+
+
+process coordinador{
+    int aux; int cant = 0;
+    while(cant < N){                                        //Supongo que cada persona quiere imprimir solo una  vez, sino sería While(true) y no debería tener la variable cant
+        P(llegue);                                          //Espero a que llegue alguien
+        P(mutex);                                           //Entro a SC
+        pop(C, aux);                                        //popeo la cola
+        V(mutex);                                           //salgo de SC
+        V(puedoImprimir(aux))                               //Aviso al proceso siguiente que puede imprimir
+        P(termine);                                         //Espero a que me avise que terminó
+        cant = cant + 1;                                    //cuento que llegó uno más
+    }
+}
+
+//C -----------------------------------------------------------------------------
+c) Modifique la solución de (b) para el caso en que se deba dar prioridad de acuerdo a la
+edad de cada persona (cuando la fotocopiadora está libre la debe usar la persona de mayor
+edad entre las que estén esperando para usarla).
+
+sem mutex = 1;
+sem llegue= 0;
+sem puedoImprimir[1..40] = [40]0;
+sem termine = 0;
+cola C;
+
+process Personas[id: 1..N]{
+    P(mutex);                                               //Entro a SC por la cola
+    encolar(c,edad,id);                                     //Me agrego a la cola y aviso mi edad para que el proceso ENCOLAR me de prioridad en su debido caso
+    V(mutex)                                                //Salgo de SC
+    V(llegue);                                              //aviso que llegué
+    P(puedoImprimir(id))                                    //espero a que me dejen imprimir
+    Fotocopiar()                                            //Fotocopio
+    V(termine)                                              //Aviso al coordinador que terminé
+}
+
+
+process coordinador{
+    int aux; int cant = 0;
+    while(cant < N){                                        //Supongo que cada persona quiere imprimir solo una  vez, sino sería While(true) y no debería tener la variable cant
+        P(llegue);                                          //Espero a que llegue alguien
+        P(mutex);                                           //Entro a SC
+        desencolar(C, aux);                                 //popeo la cola
+        V(mutex);                                           //salgo de SC
+        V(puedoImprimir(aux))                               //Aviso al proceso siguiente que puede imprimir
+        P(termine);                                         //Espero a que me avise que terminó
+        cant = cant + 1;                                    //cuento que llegó uno más
+    }
+}

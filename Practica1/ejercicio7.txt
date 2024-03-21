@@ -20,3 +20,5 @@ process coordinator{
         }
     }
 }
+
+//No leí la consigna y no ví que no se podía usar <>
