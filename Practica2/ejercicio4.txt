@@ -32,6 +32,80 @@ process Personas[id: 1..N]{
 
 //B -----------------------------------------------------------------------------
 b) Modifique la solución de (a) para el caso en que se deba respetar el orden de llegada.
+sem puedoImprimir[1..N] = [N]0;
+boolean fotocopiando = false;
+cola C;
+sem mutex = 1;
+
+process Persona[id: 1..N]{
+    int aux;
+    P(mutex);                                       //Entro a SC
+    if(Empty(C) && !fotocopiando){                  //Si la cola está vacia y no hay nadie imprimiendo, quiere decir que yo soy el proximo
+        V(puedoImprimir[id]);                       //Me habilito a imprimir
+        fotocopiando = true;                        //Aviso que estoy fotocopiando
+    }             
+    else push(C, id)                                //Sino otra persona ya está esperando
+    V(mutex);                                       //Salgo de SC
+    P(puedoImprimir(id))                            //Espero a que me den el permiso
+    Fotocopiar();                                   //Fotocopio
+    P(mutex);                                       //Entro a SC
+    fotocopiando = false;                           //Aviso que dejé de fotocopiar
+    if(!Empty(C)){                                  //Me fijo si hay alguien en la cola
+        pop(C, aux);                                //Lo saco al primero de la cola
+        V(puedoImprimir[id]);                       //Le aviso que puede imprimir
+    }
+    V(mutex);                                       //Salgo de SC
+}
+
+//C -----------------------------------------------------------------------------
+c) Modifique la solución de (b) para el caso en que se deba dar prioridad de acuerdo a la
+edad de cada persona (cuando la fotocopiadora está libre la debe usar la persona de mayor
+edad entre las que estén esperando para usarla).
+
+sem puedoImprimir[1..N] = [N]0;
+boolean fotocopiando = false;
+colaEspecial C;
+sem mutex = 1;
+
+process Persona[id: 1..N]{
+    int aux;
+    P(mutex);                                       //Entro a SC
+    if(Empty(C) && !fotocopiando){                  //Si la cola está vacia y no hay nadie imprimiendo, quiere decir que yo soy el proximo
+        V(puedoImprimir[id]);                       //Me habilito a imprimir
+        fotocopiando = true;                        //Aviso que estoy fotocopiando
+    }             
+    else Encolar(C,edad, id)                        //Sino otra persona ya está esperando, me encolo con la edad
+    V(mutex);                                       //Salgo de SC
+    P(puedoImprimir(id))                            //Espero a que me den el permiso
+    Fotocopiar();                                   //Fotocopio
+    P(mutex);                                       //Entro a SC
+    fotocopiando = false;                           //Aviso que dejé de fotocopiar
+    if(!Empty(C)){                                  //Me fijo si hay alguien en la cola
+        Desencolar(C,edad, aux);                    //Lo saco al primero de la cola, teniendo en cuenta las  prioridades
+        V(puedoImprimir[id]);                       //Le aviso que puede imprimir
+    }
+    V(mutex);                                       //Salgo de SC
+}
+
+//D -----------------------------------------------------------------------------
+d) Modifique la solución de (a) para el caso en que se deba respetar estrictamente el orden
+dado por el identificador del proceso (la persona X no puede usar la fotocopiadora hasta
+que no haya terminado de usarla la persona X-1).
+
+sem puedoImprimir[1..N] = [1]1 [2..N]0 //No sé como hacer esta notación (Ponerle 1 al primero y al resto 0)
+
+process Persona[id: 1..N]{
+    P(puedoImprimir[id])        //Espero a que me permitan imprimir
+    Fotocopiar();               //Imprimo
+    V(puedoImprimir[id + 1])    //Le aviso al proximo que yo ya terminé y que puede ir él
+}
+
+//E -----------------------------------------------------------------------------
+e) Modifique la solución de (b) para el caso en que además haya un Empleado que le indica
+a cada persona cuando debe usar la fotocopiadora.
+
+//  PREGUNTAR SI ES NECESARIO ENCOLARSE CUANDO NO HAY NADIE EN LA COLA, SI EL COORDINADOR SIEMPRE TE INDICA CUAL VAS A USAR
+
 sem mutex = 1;
 sem llegue= 0;
 sem puedoImprimir[1..40] = [40]0;
@@ -62,37 +136,50 @@ process coordinador{
     }
 }
 
-//C -----------------------------------------------------------------------------
-c) Modifique la solución de (b) para el caso en que se deba dar prioridad de acuerdo a la
-edad de cada persona (cuando la fotocopiadora está libre la debe usar la persona de mayor
-edad entre las que estén esperando para usarla).
+
+//F -----------------------------------------------------------------------------
+f) Modificar la solución (e) para el caso en que sean 10 fotocopiadoras. El empleado le indica
+a la persona cuando puede usar una fotocopiadora, y cual debe usar.
+
 
 sem mutex = 1;
 sem llegue= 0;
 sem puedoImprimir[1..40] = [40]0;
 sem termine = 0;
 cola C;
+sem CantImpresoras = 10;
+cola Rec = {1,2,3, .., 10};
+int fotoAUsar[1..40];
+sem mutexRec = 1;
+
 
 process Personas[id: 1..N]{
     P(mutex);                                               //Entro a SC por la cola
-    encolar(c,edad,id);                                     //Me agrego a la cola y aviso mi edad para que el proceso ENCOLAR me de prioridad en su debido caso
-    V(mutex)                                                //Salgo de SC
+    push(c, id);                                            //Me agrego a la cola
+    V(mutex);                                                //Salgo de SC
     V(llegue);                                              //aviso que llegué
     P(puedoImprimir(id))                                    //espero a que me dejen imprimir
-    Fotocopiar()                                            //Fotocopio
-    V(termine)                                              //Aviso al coordinador que terminé
+    Fotocopiar(fotoAUsar(id));                              //Fotocopio en la impresora que me toca
+    P(mutexRec);
+    push(rec, fotoAUsar(id))   
+    V(mutexRec);                             
+    V(cantImpresoras)                                       //Aviso al coordinador que terminé
 }
 
 
 process coordinador{
-    int aux; int cant = 0;
+    int aux; int cant = 0; int auxRec;
     while(cant < N){                                        //Supongo que cada persona quiere imprimir solo una  vez, sino sería While(true) y no debería tener la variable cant
         P(llegue);                                          //Espero a que llegue alguien
+        P(cantImpresoras)                                   //Me fijo que haya una impresora para usar
         P(mutex);                                           //Entro a SC
-        desencolar(C, aux);                                 //popeo la cola
+        pop(C, aux);                                        //popeo la cola
         V(mutex);                                           //salgo de SC
+        P(mutexRec);                                        //Entro a SC de la cola REC
+        pop(rec, auxRec);                                   //Saco el recurso de la cola
+        V(mutexRec);                                        //Salgo de la SC
+        fotoAUsar[aux] = auxRec;                            //Le asigno que impresora tiene que usar al proximo que quiere imprimir
         V(puedoImprimir(aux))                               //Aviso al proceso siguiente que puede imprimir
-        P(termine);                                         //Espero a que me avise que terminó
         cant = cant + 1;                                    //cuento que llegó uno más
     }
 }
