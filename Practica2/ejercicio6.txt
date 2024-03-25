@@ -1,0 +1,52 @@
+sem terminoViaje[0..3] = [3]0;
+cantSubidos[0..3] = 0;
+mutexCantSubidos[0..3] = [3]1;
+int espacioCombi[0..3] = [3]25,
+boolean tenesEspacio[1..C] = false;
+sem respuesta[0..C] = [C]0
+sem comprado = 0;
+sem combiLlena[0..3] = [3]0;
+
+//NECESITO AVISARLE A LOS CLIENTES QUE EL MICRO YA EMPEZÓ A ANDAR CON UNA BARRERA?
+
+process cliente[id: 1..C]{
+    P(mutexCola);
+    push(cola, (id, combi));
+    V(mutexCola);
+    V(comprado);
+    P(respuesta[id]);
+    if(tenesEspacio[id]){
+        P(mutexCantSubidos[combi])
+        cantSubidos[combi]++
+        if(cantSubidos == 25){
+            V(combiLlena[combi])
+        }
+        V(mutexCantSubidos[combi]);
+        P(terminoViaje[combi])
+    }
+}
+
+
+process vendedor{
+    int auxId, auxCombi
+    for(i=1..C){
+        P(comprado)
+        P(mutexCola);
+        pop(cola, (auxID, auxCombi));
+        V(mutexCola);
+        if(espacioCombi[auxCombi] > 0){
+            espacioCombi[auxCombi]--;
+            tenesEspacio[auxId] = true;
+        }
+        V(respuesta[auxId]);
+    }
+}
+
+
+process combi[id: 0..3]{
+    P(combiLlena[id]);
+    delay(20)
+    for(i: 1..25){
+        V(terminoViaje[id])
+    }
+}
