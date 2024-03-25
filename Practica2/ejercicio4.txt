@@ -146,12 +146,12 @@ a la persona cuando puede usar una fotocopiadora, y cual debe usar.
 
 sem mutex = 1;
 sem llegue= 0;
-sem puedoImprimir[1..40] = [40]0;
+sem puedoImprimir[1..N] = [N]0;
 sem termine = 0;
 cola C;
 sem CantImpresoras = 10;
 cola Rec = {1,2,3, .., 10};
-int fotoAUsar[1..40];
+int fotoAUsar[1..N];
 sem mutexRec = 1;
 
 
