@@ -35,11 +35,10 @@ int siguiente = -1;
 process persona[id: 0..N]{
     <if(siguiente == -1) siguiente = id
     else Agregar(C,id)>
-    <await(siguiente == id);
-    usoImpresora = true>
+    <await(siguiente == id);>
     Imprimir(documento)
     <if empty(cola) siguiente = -1
-    else siguiente = Sacar(colar)>
+    else Sacar(cola, siguiente)>
 }
 
 //Modifique la solución de (b) para el caso en que se deba respetar el orden de llegada pero
@@ -92,11 +91,12 @@ process persona[id: 0..N]{
 }
 
 process coordinador{
+    int id;
     while(true){
         <await(not empty(c))>
         <await(not ocupado)>
         ocupado = true
-        id = Sacar(c);
+        <id = Sacar(c);>
         ok[id] = 1
     }
 }

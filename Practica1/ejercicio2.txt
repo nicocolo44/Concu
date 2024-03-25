@@ -4,6 +4,7 @@ arreglo de longitud M. Escriba las condiciones que considere necesarias.
 
 int N;
 int tot= 0;
+int vector
 
 process buscar[id: 1..M]{
  if(arr[id] == N){
