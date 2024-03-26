@@ -45,7 +45,7 @@ process vendedor{
 
 process combi[id: 0..3]{
     P(combiLlena[id]);
-    delay(20)
+    delay(200)
     for(i: 1..25){
         V(terminoViaje[id])
     }
