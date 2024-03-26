@@ -15,7 +15,7 @@ int cantProd[1..5] = [5]0;
 process empleado[id: 1..15]{
     P(mutex);                                       //Entro a SC
     cant = cant + 1;                                //Sumo que llegué
-    grupo[id] = cant / 5 + 1;                       //Divido de forma entera por 5 y me quedo con ese numero como grupo
+    grupo[id] = cant / 3 + 1;                       //Divido de forma entera por 5 y me quedo con ese numero como grupo
     V(mutex);                                       //Libero SC
     P(permiso[grupo[id]]);                          //Entro a SC de mi grupo
     while(permiso[grupo[id]]<P){                    //Me fijo si todavía no hicimos/se estan haciendo todos los productos
