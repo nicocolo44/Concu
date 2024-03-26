@@ -18,7 +18,7 @@ process empleado[id: 1..15]{
     grupo[id] = cant / 3 + 1;                       //Divido de forma entera por 3 y me quedo con ese numero como grupo
     V(mutex);                                       //Libero SC
     P(permiso[grupo[id]]);                          //Entro a SC de mi grupo
-    while(cantProd[grupo[id]]<P){                    //Me fijo si todavía no hicimos/se estan haciendo todos los productos
+    while(cantProd[grupo[id]]<P){                   //Me fijo si todavía no hicimos/se estan haciendo todos los productos
         cantProd[grupo[id]]++;                      //Aviso que voy a hacer uno más
         V(permiso[grupo[id]]);                      //Salgo de SC del grupo
         delay(20);                                  //Hago el producto
