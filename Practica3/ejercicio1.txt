@@ -1,0 +1,31 @@
+1. Implementar el acceso a una base de datos de solo lectura que puede atender a lo sumo 5 consultas simultáneas.
+
+process lectores[id:1..N]{
+    baseDeDatos.permiso();
+    //Leo base de datos
+    baseDeDatos.termine();
+}
+
+monitor baseDeDatos{                    //Creo que es mejor nombrarlo como adminBaseDeDatos
+    int cantLectores = 0;               
+    cond espera;
+    int esperando = 0;
+
+    Procedure permiso(){
+        if(cantLectores == 5){
+            esperando++;
+            wait(espera);
+        }
+        cantLectores++;
+    }
+
+    Procedure termine(){
+        if(esperando == 0){
+            cantLectores--;
+        }else{
+            esperando--;
+            signal(espera);
+        }
+    }
+}
+
