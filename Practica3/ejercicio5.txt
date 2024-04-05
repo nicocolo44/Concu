@@ -1,0 +1,89 @@
+Suponga una comisión con 50 alumnos. Cuando los alumnos llegan forman una fila, una
+vez que están los 50 en la fila el jefe de trabajos prácticos les entrega el número de grupo
+(número aleatorio del 1 al 25) de tal manera que dos alumnos tendrán el mismo número de
+grupo (suponga que el jefe posee una función DarNumero() que devuelve en forma aleatoria
+un número del 1 al 25, el jefe de trabajos prácticos no guarda el número que le asigna a
+cada alumno). Cuando un alumno ha recibido su número de grupo comienza a realizar la
+práctica. Al terminar de trabajar, el alumno le avisa al jefe de trabajos prácticos y espera la
+nota. El jefe de trabajos prácticos, cuando han llegado los dos alumnos de un grupo les
+devuelve a ambos la nota del GRUPO (el primer grupo en terminar tendrá como nota 25, el
+segundo 24, y así sucesivamente hasta el último que tendrá nota 1).
+
+
+
+process alumnos[id: 1..50]{
+    int grupo;
+    monitor.llegue(id, grupo);
+    //HacerPractica
+    monitor.termine(grupo);
+}
+
+process profesor{
+    monitor.asignarGrupos();
+    monitor.corregir();
+}
+
+
+monitor monitor{
+    int cant = 0;
+    cond barrera;
+    cond profeDormido;
+    boolean llegaronTodos = false;
+    int grupo[1..50];
+    int numeros[1..25] = [25]0;
+    int integranteTerminado[1..25] = [25]0
+    cond esperarNota[1..25];
+    cond termino;
+
+
+    Procedure llegue(id: in int, grupoSalida: out int){
+        cant++;
+        if(cant == 50){
+            llegaronTodos = true;
+            signal(profeDormido)
+        }
+        wait(barrera);
+        grupoSalida = grupo[id];
+    }
+
+    Procedure asignarGrupos(){
+        int numero;
+        if(!llegaronTodos){
+            wait(profeDormido);
+        }
+        for(i: 1..50){ //NO SE SI TENGO QUE HACERLO EN ORDEN DE LLEGADA O LE DOY UN NUMERO RANDOM A CADA UNO
+            numero = darNumero();
+            while(numeros[numero] == 2)
+                numero = darNumero();
+            grupo[i] = numero;
+            numeros[numero]++;
+        }
+        signal_all(barrera);
+    }
+
+    Procedure termine(grupo: in int, nota: out int){
+        integranteTerminado[grupo]++;
+        encolar(c,grupo);
+        signal(termino);
+        wait(esperarNota[grupo]);
+        nota[grupo] = nota;
+    }
+
+    Procedure corregir(){
+        int grupoAux;
+        int corregidos = 0;
+        while(corregidos < 25){
+            if(empty(c)){
+                wait(termino);
+            }
+            desencolar(c, grupoAux)
+            if(integranteTerminado[grupoAux] == 2){ 
+                nota[grupoAux] = 25 - corregidos;
+                corregidos++;
+                signal_all(esperarNota[grupo]);
+            }
+        }
+    }
+
+
+}
