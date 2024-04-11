@@ -26,7 +26,7 @@ process profesor{
 
 monitor monitor{
     int cant = 0;
-    cond barrera;
+    cond barrera[1..50];
     cond profeDormido;
     boolean llegaronTodos = false;
     int grupo[1..50];
@@ -34,31 +34,33 @@ monitor monitor{
     int integranteTerminado[1..25] = [25]0
     cond esperarNota[1..25];
     cond termino;
-
+    cola c;
 
     Procedure llegue(id: in int, grupoSalida: out int){
         cant++;
         if(cant == 50){
+            encolar(c, id)
             llegaronTodos = true;
             signal(profeDormido)
         }
-        wait(barrera);
+        wait(barrera[id]);
         grupoSalida = grupo[id];
     }
 
     Procedure asignarGrupos(){
-        int numero;
+        int numero, auxId;
         if(!llegaronTodos){
             wait(profeDormido);
         }
-        for(i: 1..50){ //NO SE SI TENGO QUE HACERLO EN ORDEN DE LLEGADA O LE DOY UN NUMERO RANDOM A CADA UNO
+        for(i: 1..50){ //NO SE SI TENGO QUE HACERLO EN ORDEN DE LLEGADA O LE DOY UN NUMERO RANDOM A CADA UNO (lo cambié al orden de llegada, no sé si lo hice bien)
             numero = darNumero();
             while(numeros[numero] == 2)
                 numero = darNumero();
-            grupo[i] = numero;
+            desencolar(c, audId)
+            grupo[audId] = numero;
             numeros[numero]++;
+            signal(barrera[auxId])
         }
-        signal_all(barrera);
     }
 
     Procedure termine(grupo: in int, nota: out int){

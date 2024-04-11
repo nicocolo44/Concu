@@ -5,7 +5,7 @@ escritorio correspondiente a ese profesor, donde le tomará el examen; al termin
 profesor le da la nota y el alumno se retira. Cuando un profesor está libre llama al siguiente
 alumno. Nota: todos los procesos deben terminar su ejecución.
 
-
+//ESTA MAL
 
 
 process alumno[id: 1..30]{
