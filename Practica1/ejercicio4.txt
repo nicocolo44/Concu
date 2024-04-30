@@ -68,7 +68,7 @@ int act = -1;
 process persona[id: 0..N]{
     <await(act == (id - 1))>
     Imprimir(documento)
-    act = act + 1;
+    <act = act + 1>;
 }
 
 
