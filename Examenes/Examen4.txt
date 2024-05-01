@@ -74,7 +74,7 @@ monitor coordinador{
     procedure enviarMedicion(id: int in, medicion: int in, respuesta: int out){
         encolar(c, (id, medicion));
         signal(llegue);
-        wait(espera[id]);
+        wait(espera);
         respuesta = respuestas[id]
     }
 
@@ -87,7 +87,7 @@ monitor coordinador{
 
     procedure enviarRespuesta(auxId: int in, respuesta: int in){
         respuestas[id] = respuesta;
-        signal(espera[id]);
+        signal(espera);
     }
 }
 

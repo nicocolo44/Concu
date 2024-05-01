@@ -6,3 +6,58 @@ para verificar. Luego de la revisión, la estación le entrega un comprobante qu
 del resultado, el vehículo se retira de la planta. Nota: maximizar la concurrencia. 
 
 
+cola ColaInicial;
+int cantAutos[1..7] = [7]0;
+sem meDieronPlanta[1..150] = [150]0;
+sem mutexColaInicial= 1;
+sem mutexColaPlanta= 1;
+cola colaPlanta[1..7];
+certificado certificados[1..150];
+sem meEntregaronCertificado[1..150] = [150]0;
+sem meEncoleC;
+sem meEncoleP[1..7];
+
+process vehiculo[id: 1..150]{
+    P(mutexColaInicial);
+    encolar(ColaInicial, id);
+    V(mutexColaInicial);
+    V(meEncoleC);
+
+    P(meDieronPlanta[id]);
+    planta = plantaPorPersona[id];
+
+    P(mutexColaPlanta[planta]);
+    encolar(colaPlanta[planta],id)
+    V(mutexColaPlanta[planta]);
+    V(meEncoleP[planta]);
+    
+    P(meEntregaronCertificado[id])
+    certificado c = certificados[id];
+
+}
+
+process coordinador{
+    for(i:1..150){
+        P(meEncoleC);
+        P(mutexColaInicial)
+        pop(colaInicial, auxId)
+        V(mutexColaInicial)
+        terminal = min(cantAutos);
+        cantAutos[terminal]++;
+        plantaPorPersona[auxId] = terminal;
+        V(meDieronPlanta[auxId])
+    }
+}
+
+process planta[id: 1..7]{
+    while(true){
+        P(meEncoleP[id]);
+        P(mutexColaPlanta[id])
+        pop(colaPlanta[id], auxId);
+        V(mutexColaPlanta[id])
+        //genero informe generando certificado
+        certificados[auxId] = certificado;
+        V(meEntregaronCertificado[auxId]);
+    }
+}
+
