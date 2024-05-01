@@ -1,0 +1,159 @@
+# 1. Resolver con SENTENCIAS AWAIT (<> y/o <await B; S>) el siguiente problema. Se debe 
+# simular una maratón con C corredores donde en la llegada hay UNA máquinas 
+# expendedoras de botella de agua. Cuando los C corredores han llegado al inicio comienza la 
+# carrera. Cuando un corredor termina la carrera se dirige a la máquina expendedora, espera su 
+# turno (respetando el orden de llegada), saca una botella y se retira. Nota: maximizar la 
+# concurrencia.
+
+CantidadCorredores = 0;
+Siguiente = -1;
+cola c;
+
+Process persona[id: 1..C]{
+    <CantidadCorredores++>
+    <await CantidadCorredores == C>
+    //Corren carrera
+    <if(siguiente == -1){
+        siguiente == id
+    }>
+    if(siguiente !== id){
+        encolar(c, id);
+        <await siguiente == id>
+    }
+    //Tomo agua
+    <if(empty(c)){
+        siguiente = -1;
+    }else{
+        desencolar(c, siguiente);
+    }>
+}
+
+
+# 2. Resolver con SEMÁFOROS la siguiente situación. En una herrería hay 15 empleados que 
+# forman 5 grupos de 3 personas; los grupos se forman de acuerdo al orden de llegada (los 3 
+# primeros pertenecen al grupo 1, los 3 siguientes al grupo 2, y así sucesivamente). Ni bien 
+# conoce el grupo al que pertenece el empleado comienza a trabajar (no debe esperar al resto 
+# de grupo para comenzar). Cada grupo debe hacer exactamente P unidades de un producto 
+# (cada unidad es hecha por un único empleado). Al terminar de hacer las P unidades de un 
+# grupo, sus 3 empleados se deben juntar para retirarse juntos. Nota: maximizar la 
+# concurrencia; ningún grupo puede hacer unidades de más. 
+
+cantLlegados = 0;
+sem mutexCantLlegados = 1;
+sem mutexProductos[0..4] = [5]1;
+int cantProductos[0..4] = [5]0
+sem barreraSalida[0..4] = [5]0;
+sem mutexCantSalida[0..4] = [5]1;
+int cantSalida[0..4] = [5]0;
+
+process herreros[id: 0..14]{
+    int grupo;
+    P(mutexCantLlegados);
+    grupo = cantLlegados / 3; //Division entera
+    cantLlegados++;
+    V(mutexCantLlegados);
+    P(mutexProductos[grupo]);
+    while(cantProductos < P){
+        cantProductos[grupo]++;
+        V(mutexProductos[grupo]);
+        //Hago producto
+        P(mutexProductos[grupo]);
+    }
+    V(mutexProductos[grupo]);
+    P(mutexCantSalida[grupo]);
+    cantSalida[grupo]++;
+    if(cantSalida[grupo] == 3){
+        for(i: 1..3) V(barreraSalida[grupo]);
+    }
+    V(mutexCantSalida[grupo])
+    P(barrera);    
+}
+
+
+# 3. Resolver con MONITORES la siguiente situación. Se debe simular un juego en el que 
+# participan 30 jugadores que forman 5 grupos de 6 personas. Al llegar cada jugador debe 
+# buscar las instrucciones y el grupo al que pertenece en un cofre de cemento privado para 
+# cada uno; para esto deben usar un único martillo gigante de a  uno a la vez y de acuerdo al 
+# orden de llegada. 
+# Luego se debe juntar con el resto de los integrantes de su grupo y los 6 
+# juntos realizan las acciones que indican sus instrucciones. Cuando un grupo termina su juego 
+# le avisa a un Coordinador que le indica en qué orden término el grupo. Nota: maximizar la 
+# concurrencia; suponer que existe n Jugar() quna funcióue simula que los 6 integrantes de un 
+# grupo están jugando juntos; suponga que existe una función Romper(grupo) que simula 
+# cuando un jugador está rompiendo su cofre con el martillo y le retorna el grupo al que 
+# pertenece.
+
+
+
+process jugadores[id: 1..30]{
+    int grupo
+    martillo.utilizar();
+    romper(grupo);
+    martillo.dejar();
+    grupos[grupo].llegue();
+}
+
+Process grupo[id: 0..4]{
+    int posicion;
+    grupos[id].llegaronTodos();
+    Jugar();
+    coordinador.terminamos(posicion);
+    grupos[id].terminoGrupo();
+}
+
+monitor grupos[1..5]{
+    cond barrera;
+    int cant = 0;
+    int posicionFinal;
+    
+
+    procedure llegue(){
+        cant++;
+        if(cant==6){
+            signal(empezarAjugar)
+        }
+        wait(barrera);
+    }
+
+    procedure llegaronTodos(){
+        if(cant < 6){
+            wait(empezarAjugar);
+        }
+    }
+
+    procedure terminoGrupo(){
+        signal_all(barrera);        
+    }
+}
+
+monitor coordinador{
+    int cant = 0;
+    procedure terminamos(posicion: int out){
+        posicion = ++cant;
+    }
+}
+
+
+monitor martillo{
+    boolean libre = true;
+    cond cola;
+    int esperando = 0;;
+
+    procedure utilizar(){
+        if(libre){
+            libre=false;
+        }else{
+            esperando++;
+            wait(cola);
+        }
+    }
+
+    procedure dejar(){
+        if(esperando==0){
+            libre = true;
+        }else{
+            esperando--;
+            signal(cola);
+        }
+    }
+}

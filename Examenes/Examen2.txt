@@ -1,0 +1,120 @@
+1. Resolver con SEMÁFOROS los problemas siguientes:
+a) En una estación de trenes, asisten P personas que deben realizar una carga de su tarjeta SUBE en la terminal
+disponible. La terminal es utilizada en forma exclusiva por cada persona de acuerdo con el orden de llegada.
+Implemente una solución utilizando sólo emplee procesos Persona. Nota: la función UsarTerminal() le permite cargar
+la SUBE en la terminal disponible. 
+
+
+sem mutexCola = 1;
+cola c;
+bool libre = true;
+sem siguiente[1..P] = [P]0;
+
+process persona[id: 1..P]{
+    P(mutexCola);
+    if(!libre){
+        encolar(c, id);
+    }else{
+        libre = false;
+        V(siguente[id]);
+    }
+    V(mutexCola);
+    P(siguiente[id]);
+    UsarTerminal();
+    P(mutexCola)
+    if(vacia(c)){
+        libre = true;
+    }else{
+        desencolar(c, auxId);
+        V(auxId)
+    }
+    V(mutexCola);
+
+}
+
+b) Resuelva el mismo problema anterior pero ahora considerando que hay T terminales disponibles. Las personas
+realizan una única fila y la carga la realizan en la primera terminal que se libera. Recuerde que sólo debe emplear
+procesos Persona. Nota: la función UsarTerminal(t) le permite cargar la SUBE en la terminal t.
+
+
+sem mutexCola = 1;
+cola c;
+sem siguiente[1..P] = [P]0;
+int cant = T;
+cola terminales = {t1 .. tT};
+sem mutexTerminales;
+
+process persona[id: 1..P]{
+    terminal t;
+    P(mutexCola);
+    if(cant == 0){
+        encolar(c, id);
+    }else{
+        cant--;
+        V(siguente[id]);
+    }
+    V(mutexCola);
+    P(siguiente[id]);
+    P(mutexTerminales);
+    pop(terminales, t);
+    V(mutexTerminales);
+    UsarTerminal(t);
+    P(mutexTerminales);
+    push(terminales,t);
+    V(mutexTerminales);
+    P(mutexCola)
+    if(vacia(c)){
+        cant++;
+    }else{
+        desencolar(c, auxId);
+        V(siguiente[auxId]);
+    }
+    V(mutexCola);
+}
+
+2. Resolver con MONITORES el siguiente problema: En una elección estudiantil, se utiliza una máquina para voto
+electrónico. Existen N Personas que votan y una Autoridad de Mesa que les da acceso a la máquina de acuerdo con el
+orden de llegada, aunque ancianos y embarazadas tienen prioridad sobre el resto. La máquina de voto sólo puede ser
+usada por una persona a la vez. Nota: la función Votar() permite usar la máquina.
+
+
+process estudiante[id: 1..N](){
+    boolean embarazada= estudiante.isEmbarazada();
+    int edad= estudiante.edad;
+    votacion.hacerFila(id, edad, embarazada);
+    Votar();
+    votacion.termineDeVotar();
+}
+
+process autoridadDeMesa{
+    for(int i: 1..N){
+        votacion.DarPermiso()
+    }
+}
+
+monitor votacion{
+    colaEspecial c;
+    cond espera[1..N];
+    cond autoridad
+
+    procedure hacerFila(id: int in, edad: int in, embarazada: boolean in){
+        encolar(c, id, edad, embarazada);
+        signal(autoridad);
+        wait(espera[id]);
+    }
+
+    procedure termineDeVotar(){
+        signal(autoridad);
+    }
+
+    procedureDarPermiso(){
+        int auxId;
+        if(vacia(c)){
+            wait(autoridad);
+        }
+        desencolar(c, auxId);
+        signal(espera[id]);
+        wait(autoridad);
+    }
+}
+

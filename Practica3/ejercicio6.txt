@@ -7,3 +7,45 @@ de 1, 2 o 5 pesos) y se suman los montos de las 60 monedas conseguidas en el gru
 finalizar cada persona debe conocer el monto total juntado por su grupo. Nota: maximizar
 la concurrencia. Suponga que para simular la búsqueda de una moneda por parte de una
 persona existe una función Moneda() que retorna el valor de la moneda encontrada.
+
+
+procedure persona[id: 1..20]{
+    int grupoid = grupo(id) //inventado
+    int valor;
+    int valorTotal = 0;
+    grupo[grupoid].esperarGrupo();
+    for(i: 1..15){
+        int valorTotal += Moneda();
+        
+    }
+    grupo[grupoid].termine(valorTotal, valor);
+}
+
+
+monitor grupo[id: 1..5]{
+    int cantLlegados = 0;
+    int cantTerminados = 0;
+    int totalMonedas = 0;
+    cond barrera;
+
+    procedure esperarGrupo(){
+        cantLlegados++;
+        if(cantLlegados < 4){
+            wait(barrera);
+        }else{
+            signal_all(barrera)
+        }
+    }
+
+
+    procedure termine(int in valorTotal, int out valor){
+        cantTerminados++;
+        totalMonedas+=valorTotal;
+        if(cantTerminados< 4){
+            wait(barrera);
+        }else{
+            signal_all(barrera);
+        }
+        valor = totalMonedas;
+    }
+}

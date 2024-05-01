@@ -35,16 +35,18 @@ monitor monitor{
     cond esperarNota[1..25];
     cond termino;
     cola c;
+    cond agarreNumero;
 
     Procedure llegue(id: in int, grupoSalida: out int){
         cant++;
+        encolar(c, id);
         if(cant == 50){
-            encolar(c, id)
             llegaronTodos = true;
-            signal(profeDormido)
+            signal(profeDormido);
         }
         wait(barrera[id]);
         grupoSalida = grupo[id];
+        signal(agarreNumero);
     }
 
     Procedure asignarGrupos(){
@@ -52,14 +54,15 @@ monitor monitor{
         if(!llegaronTodos){
             wait(profeDormido);
         }
-        for(i: 1..50){ //NO SE SI TENGO QUE HACERLO EN ORDEN DE LLEGADA O LE DOY UN NUMERO RANDOM A CADA UNO (lo cambié al orden de llegada, no sé si lo hice bien)
+        for(i: 1..50){
             numero = darNumero();
             while(numeros[numero] == 2)
                 numero = darNumero();
-            desencolar(c, audId)
+            desencolar(c, auxId)
             grupo[audId] = numero;
             numeros[numero]++;
-            signal(barrera[auxId])
+            signal(barrera[auxId]);
+            wait(agarreNumero);
         }
     }
 
@@ -74,7 +77,7 @@ monitor monitor{
     Procedure corregir(){
         int grupoAux;
         int corregidos = 0;
-        while(corregidos < 25){
+        while(corregidos < 25){ //Podría sacar el while afuera y llamar al corregir 25 veces
             if(empty(c)){
                 wait(termino);
             }

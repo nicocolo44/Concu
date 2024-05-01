@@ -1,0 +1,87 @@
+1. Resolver con SEMÁFOROS el siguiente problema. Se debe simular el uso de una máquina expendedora de gaseosas
+con capacidad para 100 latas por parte de U usuarios. Además existe un repositor encargado de reponer las latas de
+la máquina. Los usuarios usan la máquina según el orden de llegada. Cuando les toca usarla, sacan una lata y luego
+se retiran. En el caso de que la máquina se quede sin latas, entonces le debe avisar al repositor para que cargue
+nuevamente la máquina en forma completa. Luego de la recarga, saca una lata y se retira. Nota: maximizar la
+concurrencia; mientras se reponen las latas se debe permitir que otros usuarios puedan agregarse a la fila.
+
+
+cola c;
+sem mutexC = 1;
+boolean libre = true;
+
+sem reponer, yaRepuso;
+int cantBotellas;
+sem siguiente[1..U] = [U]0;
+
+process usuario[id: 1..U]{
+    P(mutexC);
+    if(libre){
+        libre = false;
+        V(siguiente[id]);
+    }else{
+        encolar(c, id);
+    }
+    V(mutexC);
+    P(siguiente[id]);
+    if(cantBotellas == 0){
+        V(reponer);
+        P(yaRepuso);
+    }
+    cantBotellas--;
+    P(mutexC);
+    if(empty(c)){
+        libre = true;
+    }else{
+        desencolar(c, auxId);
+        V(siguiente[auxId]);
+    }
+    V(mutexC);
+}
+
+process repositor{
+    while(true){
+        P(reponer);
+        cantBotellas=100;
+        V(yaRepuso);
+    }
+}
+
+
+2) Resolver el siguiente problema con MONITORES. En una montaña hay 30 escaladores que en una parte de la subida
+deben utilizar un único paso de a uno a la vez y de acuerdo al orden de llegada al mismo. Nota: sólo se pueden
+utilizar procesos que representen a los escaladores; cada escalador usa sólo una vez el paso.
+
+
+process escalador[id:1..30]{
+    administradorPaso.llegue();
+    pasar();
+    administradorPaso.yaPase();
+}
+
+monitor administradorPaso{
+    
+    cond c;
+    bool libre = true;
+    int cant = 0;
+
+    procedure llegue(){
+        if(libre){
+            libre= false;
+        }else{
+            cant++;
+            wait(c);
+        }
+    }
+
+    procedure yaPase(){
+        if(cant == 0){
+            libre=true;
+        }else{
+            cant--;
+            signal(c);
+        }
+    }
+
+}
+

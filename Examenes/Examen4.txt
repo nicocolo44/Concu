@@ -1,0 +1,93 @@
+int entradas = E;
+cola c;
+int entradasCadaUno[1..P];
+boolean yaRespondieron[1..P];
+int personasAtendidas = 0;
+boolean puedoVender[1..5];
+int personas = 0;
+
+process persona[id: 1..P]{
+    <encolar(c, id)>
+    <await yaRespondieron[id]>
+    int entrada = entradasCadaUno[id];
+}
+
+process boleteria[id: 1..5]{
+    int auxId;
+    int entrada
+    while(personas < P){
+        <await !empty(c) || yaTerminamos;
+        if(!yaTerminamos){
+            desencolar(c, auxId)
+            personas++
+        }else{
+            break;
+        }>
+        <if(entradas > 0){
+            entradasCadaUno[auxId] = entradas;
+            entradas--;
+        }else{
+            entradasCadaUno[auxId] = -1;
+        }>
+        yaRespondieron[auxId] = true;
+    }
+    yaTerminamos = true;
+}
+
+
+
+
+
+
+
+
+
+
+
+//----------------------------------------------
+
+process contrTemp[id:1..15]{
+    int medicion, respuesta;
+    while(true){
+        medir(medicion);
+        coordinador.enviarMedicion(id,medicion, respuesta);
+        actuar(respuesta);
+        delay(tiempo);
+    }
+}
+
+process moduloCentral{
+    int auxId;
+    while(true){
+        coordinador.recibirMedicion(auxId, medicion);
+        determinar(medicion, respuesta);
+        coordinador.enviarRespuesta(auxId, respuesta);
+    }
+}
+
+monitor coordinador{
+    cond espera[1..15];
+    cola c;
+    int respuestas[1..15];
+    cond llegue
+
+    procedure enviarMedicion(id: int in, medicion: int in, respuesta: int out){
+        encolar(c, (id, medicion));
+        signal(llegue);
+        wait(espera[id]);
+        respuesta = respuestas[id]
+    }
+
+    procedure recibirMedicion(auxId: int out, medicion: int out){
+        if(empty(c)){
+            wait(llegue);
+        }
+        desencolar(c, (auxId, medicion));
+    }
+
+    procedure enviarRespuesta(auxId: int in, respuesta: int in){
+        respuestas[id] = respuesta;
+        signal(espera[id]);
+    }
+}
+
