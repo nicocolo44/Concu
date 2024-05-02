@@ -1,0 +1,66 @@
+Simular el funcionamiento de un Complejo de Canchas de Futbol 5 que posee 8
+canchas y donde hay una máquina encargada de asignar las canchas. Al complejo
+acuden 80 jugadores divididos en 8 grupos (cada grupo tiene las 10 personas que
+jugarán en una cancha), cada jugador ya conoce a qué grupo pertenece. Cuando un
+jugador llega le indica a la máquina el grupo al que pertenece para que esta le
+indique el número de cancha a la cual debe ir, y luego se dirige a ella. Cuando los 10
+integrantes de un grupo han llegado a la cancha que les corresponde, comienzan a
+jugar el partido que dura 50 minutos; y luego se retiran. La máquina asigna el
+número de cancha de acuerdo al orden en que llega el primer jugador de cada
+grupo. Nota: maximizar la concurrencia
+
+
+process persona[id:1..80]{
+    int canchaN;
+    int grupo;
+    maquina.llegue(grupo,canchaN);
+    //Voy a la cancha;
+    cancha[canchaN].llegue();
+}
+
+process grupos[1..8]{
+    cancha[id].esperarJugadores();
+    //delay(50min);
+    cancha.terminoPartido();
+}
+
+monitor maquina{
+    int cantidadDeGruposLlegados = 0;
+    int canchaCorrespondiente[1..8] = [8]0;
+
+    procedure llegue(grupo: int in, cancha: int out){
+        if(canchaCorrespondiente[grupo] == 0){
+            canchaCorrespondiente[grupo] == cantidadDeGruposLlegados;
+            cantidadDeGruposLlegados++;
+        }
+        cancha = canchaCorrespondiente[grupo];
+    }
+}
+
+
+monitor cancha[1..8]{
+    int cantLlegados = 0;
+    cond barrera;
+    cond esperaGrupo;
+    bool llegaronTodos = false;
+
+    procedure llegue(){
+        candLlegados++
+        if(cantLlegados == 10){
+            llegaronTodos = true;
+            signal(esperaGrupo);
+        }
+        wait(barrera);
+    }
+
+    procedure esperarJugadores(){
+        if(!llegaronTodos){
+            wait(esperaGrupo);
+        }
+    }
+
+    procedure terminoPartido(){
+        signal_all(barrera;)
+    }
+
+}

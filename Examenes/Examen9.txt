@@ -1,0 +1,94 @@
+Un sistema debe validar un conjunto de 10000 transacciones que se encuentran disponibles en una estructura de
+datos. Para ello, el sistema dispone de 7 workers, los cuales trabajan colaborativamente validando de a 1
+transacción por vez cada uno. Cada validación puede tomar un tiempo diferente y para realizarla los workers
+disponen de la función Validar(t), la cual retorna como resultado un número entero entre 0 al 9. Al finalizar el
+procesamiento, el último worker en terminar debe informar la cantidad de transacciones por cada resultado de la
+función de validación. Nota: maximizar la concurrencia
+
+
+int resultados[0..9] = [9]0
+sem mutexC = 1;
+sem mutexResul[0..9]= [9]1;
+Cola c;
+
+
+sem barrera;
+int cantLlegados=0;
+sem mutexCantLlegados = 1;
+
+process worker[id:1..7]{
+    transaccion t;
+    int resul;
+    P(mutexC);
+    While(!c.empty()){
+        c.desencolar(t)
+        V(mutexC);
+        resul = Validar(t);
+        P(mutexResul[resul]);
+        resultados[resul]++;
+        V(mutexResul[resul]);
+        P(mutexC);
+    }
+    V(mutexC);
+
+    P(mutexCantLlegados);
+    cantLlegados++;
+    if(cantLlegados == 7){
+        for(i:0..9){
+            informar(resultados[i])
+        }
+        for(i:1..7){
+            V(barrera);
+        }
+    }
+    V(mutexCantLlegados);
+    P(barrera);
+}
+
+
+En una empresa trabajan 20 vendedores ambulantes que forman 5 equipos de 4 personas cada uno (cada vendedor
+conoce previamente a que equipo pertenece). Cada equipo se encarga de vender un producto diferente. Las
+personas de un equipo se deben juntar antes de comenzar a trabajar. Luego cada integrante del equipo trabaja
+independientemente del resto vendiendo ejemplares del producto correspondiente. Al terminar cada integrante del
+grupo debe conocer la cantidad de ejemplares vendidos por el grupo. Nota: maximizar la concurrencia.
+
+
+
+
+process vendedor[id: 1..20]{
+    equipo[grupo].llegue();
+    while(termina){
+        Vender(termina);
+        cant++;
+    }
+    int cantTot;
+    equipo[grupo].termine(cant, cantTot);
+}
+
+
+monitor equipo[id:1..5]{
+    int cant= 0;
+    cond barrera;
+    cantTotal = 0;
+
+    procedure llegue(){
+        cant++;
+        if(cant == 4){
+            signal_all(barrera);
+            cant = 0;
+        }else{
+            wait(barrera);
+        }
+    }
+
+    procedure termine(cantP: int in; cantTot: int out){
+        cantTotal+=cantP;
+        cant++;
+        if(cant == 4){
+            signal_all(barrera);
+        }else{
+            wait(barrera);
+        }
+        cantTot = cantTotal;
+    }
+}

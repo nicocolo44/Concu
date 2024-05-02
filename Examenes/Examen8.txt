@@ -1,0 +1,110 @@
+. Resolver con SEMÁFOROS el siguiente problema. En un restorán trabajan C cocineros y M mozos. De
+forma repetida, los cocineros preparan un plato y lo dejan listo en la bandeja de platos terminados, mientras
+que los mozos toman los platos de esta bandeja para repartirlos entre los comensales. Tanto los cocineros
+como los mozos trabajan de a un plato por vez. Modele el funcionamiento del restorán considerando que la
+bandeja de platos listos puede almacenar hasta P platos. No es necesario modelar a los comensales ni que
+los procesos terminen. 
+
+
+cola c;
+sem mutexC = 1;
+sem bandeja = 7;
+sem dejePlato = 0;
+
+
+
+process cocinero(){
+    while(true){
+        //Creo un plato
+        P(bandeja);
+        P(mutexC)
+        push(c, plato);
+        V(mutexC)
+        //Dejo el plato en la bandeja
+        V(dejePlato);
+    }
+}
+
+
+process mozo(){
+    while(True){
+        P(dejePlato);
+        //Agarro plato
+        P(mutexC)
+        pop(c, plato)
+        V(mutexC)
+        V(bandeja);
+        //RepartoPlato
+    }
+}
+
+
+2. Resolver con MONITORES el siguiente problema. En una planta verificadora de vehículos existen 5
+estaciones de verificación. Hay 75 vehículos que van para ser verificados, cada uno conoce el número de
+estación a la cual debe ir. Cada vehículo se dirige a la estación correspondiente y espera a que lo atiendan.
+Una vez que le entregan el comprobante de verificación, el vehículo se retira. Considere que en cada estación
+se atienden a los vehículos de acuerdo con el orden de llegada. Nota: maximizar la concurrencia. 
+
+
+process vehiculos[1..75]{
+    fila[estacion].llegue();
+    atencion[estacion].verificar(vehiculo, resultado);
+    fila[estacion].salir();
+}
+
+process estacionP[id:1..5]{
+    while(true){
+        atencion[id].atender();
+    }
+}
+
+monitor fila[id:1..5]{
+    cond c;
+    bool libre = true;
+    int cant = 0;
+
+    procedure llegue(){
+        if(!libre){
+            cant++;
+            wait(c);
+        }else{
+            libre = false;
+        }
+        siguiente = id;
+
+    }
+    procedure salir(){
+        if(cant == 0){
+            libre = true;
+        }else{
+            cant--;
+            signal(c);
+        }
+    }
+}
+
+monitor atencion[1..5]{
+    comprobante comp;
+    resultado res;
+    cond hayAuto;
+    bool hayAutoEsperando;
+    cond esperoResul;
+
+    procedure verificar(vehiculo v, resultado r){
+        hayAutoEsperando = true;
+        vehiculo = v;
+        signal(hayAuto);
+        wait(esperoResul);
+        r = res;
+    }
+
+    procedure atender(){
+        if(!hayAutoEsperando){
+            wait(hayAuto);
+        }
+        //Genero resultado con variable vehiculo
+        hayAutoEsperando = false;
+        r = resultadoGenerado;
+        signal(esperoResul);
+    }
+}

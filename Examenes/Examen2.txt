@@ -118,3 +118,42 @@ monitor votacion{
     }
 }
 
+
+
+Simular la atención en un Centro de Vacunación con 8 puestos para vacunar contra
+el coronavirus. Al Centro acuden 200 pacientes para ser vacunados, cada uno de
+ellos ya conoce el puesto al que se debe dirigir. En cada puesto hay UN empleado
+para vacunar a los pacientes asignados a dicho puesto, y lo hace de acuerdo al
+orden de llegada al mismo. Cada paciente al llegar al puesto que tenía asignado
+espera a que lo llamen para vacunarlo, y al terminar se retira. Nota: suponer que
+existe una función Vacunar() que simula la atención del paciente por parte del
+empleado. Suponer que cada puesto tiene asignado 25 pacientes. Todos los
+procesos deben terminar.
+
+
+sem mutexCP[1..8] = [8]1;
+cola cola[1..8];
+sem estoyEsperando[1..8] = [8]0;
+sem EsperoAQueMeVacunen[1..200] = [200]0;
+
+
+process paciente[id:1..200]{
+    int puesto;
+    P(mutexCP[puesto])
+    cola[puesto].encolar(id);
+    V(mutexCP[puesto]);
+    V(estoyEsperando[puesto]);
+    P(EsperoAQueMeVacunen[id]);
+}
+
+process empleado[id: 1..8]{
+    for(i:1..25){
+        P(estoyEsperando[id]);
+        P(mutexCP[id])
+        cola[id].desencolar(auxId);
+        V(mutexCP[id]);
+        Vacunar(auxId);
+        V(EsperoAQueMeVacunen[auxId])
+    }
+}
+
