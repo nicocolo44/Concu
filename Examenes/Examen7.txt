@@ -13,7 +13,9 @@ grupo. Nota: maximizar la concurrencia
 process persona[id:1..80]{
     int canchaN;
     int grupo;
+    fila.llegue();
     maquina.llegue(grupo,canchaN);
+    fila.fin();
     //Voy a la cancha;
     cancha[canchaN].llegue();
 }

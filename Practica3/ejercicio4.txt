@@ -85,7 +85,7 @@ monitor escritorio[1..3]{
         if(!entregue) wait(esperandoEntrega);
         entregue = false;
         e = examenEntregado;
-        //Corrigo e generando una nota en nota
+        //Corrijo e generando una nota en nota
         notaExamen = nota;
         signal(esperandoNota);
     }

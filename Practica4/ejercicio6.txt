@@ -1,0 +1,39 @@
+6. En un laboratorio de genética veterinaria hay 3 empleados. El primero de ellos se encarga
+de preparar las muestras de ADN lo más rápido posible; el segundo toma cada muestra de
+ADN preparada y arma el set de análisis que se deben realizar con ella y espera el resultado
+para archivarlo y continuar trabajando; el tercer empleado se encarga de realizar el análisis y
+devolverle el resultado al segundo empleado. 
+
+process admin{
+    cola bufferMuestras;
+    do primero?EntregarMuestra(muestraAux) => bufferMuestras.push(muestraAux);
+       not empty(bufferMuestras); segundo?ListoParaReger() => segundo!RecojoMuestra(bufferMuestras.pop())
+    od
+}
+
+
+process primero{
+    while(true){
+        //Trabajo
+        admin!EntregarMuestra(MuetraADN);
+    }
+}
+
+process segundo{
+    while(true){
+        admin!ListoParaReger();
+        admin?RecojoMuestra(muestraADN);
+        //preparo el set para analizar
+        tercero!darMuestra(muestraADN);
+        tercero?RecogerResultado(resul);
+        guardarResul(resultado)
+    }
+}
+
+process tercero{
+    while(true){
+        segundo?darMuestra(muestraADN)
+        resultado = analizarMuestra(muestraADN);
+        segundo!RecogerResultado(resultado);
+    }
+}
