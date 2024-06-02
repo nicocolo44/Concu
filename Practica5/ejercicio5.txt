@@ -1,0 +1,41 @@
+5. En un sistema para acreditar carreras universitarias, hay UN Servidor que atiende pedidos
+de U Usuarios de a uno a la vez y de acuerdo al orden en que se hacen los pedidos. Cada
+usuario trabaja en el documento a presentar, y luego lo envía al servidor; espera la respuesta
+del mismo que le indica si está todo bien o hay algún error. Mientras haya algún error vuelve
+a trabajar con el documento y a enviarlo al servidor. Cuando el servidor le responde que
+está todo bien el usuario se retira. Cuando un usuario envía un pedido espera a lo sumo 2
+minutos a que sea recibido por el servidor, pasado ese tiempo espera un minuto y vuelve a
+intentarlo (usando el mismo documento).
+
+task type usuario;
+
+task servidor is
+    entry trabajo(documento: in text, hayError: out boolean)
+end servidor
+
+
+usuarios: array(1..U) OF usuario;
+
+task body servidor is
+begin
+    loop
+        accept trabajo(documento: in text, hayError: out boolean) do
+            hayError = not corregirTrabajo(documento);
+        end trabajo;
+    end loop;
+end servidor
+
+task body usuario is
+    hayError: boolean;
+    doc: text;
+begin
+    doc = generarDoc();
+    servidor.trabajo(doc, hayError);
+    loop(hayError)
+        corregir(doc);
+        servidor.trabajo(doc, hayError);
+    end loop;
+end usuario;
+        
+
+end usuario;

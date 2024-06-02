@@ -1,0 +1,125 @@
+4. En una clínica existe un médico de guardia que recibe continuamente peticiones de
+atención de las E enfermeras que trabajan en su piso y de las P personas que llegan a la
+clínica ser atendidos.
+Cuando una persona necesita que la atiendan espera a lo sumo 5 minutos a que el médico lo
+haga, si pasado ese tiempo no lo hace, espera 10 minutos y vuelve a requerir la atención del
+médico. Si no es atendida tres veces, se enoja y se retira de la clínica.
+Cuando una enfermera requiere la atención del médico, si este no lo atiende inmediatamente
+le hace una nota y se la deja en el consultorio para que esta resuelva su pedido en el
+momento que pueda (el pedido puede ser que el médico le firme algún papel). Cuando la
+petición ha sido recibida por el médico o la nota ha sido dejada en el escritorio, continúa
+trabajando y haciendo más peticiones.
+El médico atiende los pedidos teniendo dándoles prioridad a los enfermos que llegan para ser
+atendidos. Cuando atiende un pedido, recibe la solicitud y la procesa durante un cierto
+tiempo. Cuando está libre aprovecha a procesar las notas dejadas por las enfermeras.
+
+
+process ejer4 is
+
+task type persona;
+
+task type enfermera;
+
+task medico is
+    entry paciente();
+    entry pedidoEnfermera(p: in text);
+    entry dejarNota(n: in text);
+end medico;
+
+task escritorio is
+    entry dejarNota(p: in text);
+    entry hayNota(H: out boolean);
+end escritorio;
+
+personas: aray(1..P) of persona;
+enfermeras: array(1..E) of enfermera;
+
+task body medico is
+    boolean b;
+begin
+    loop
+        select
+            accept paciente() do
+                atender paciente
+            end paciente
+        or
+            when paciente'count = 0 => accept pedidoEnfermera(p: in text)
+                                                atiendo pedido
+                                        end pedidoEnfermera;
+        or
+            paciente'count = 0 && pedidoEnfermera'count = 0 =>
+                escritorio.HayNota(b);
+                if(b)
+                    accept dejarNota(n: in text)
+                        resuelvoNota
+                    end dejarNota
+                end if
+        end select
+    end loop
+end medico;
+
+
+task body escritorio is
+    cola c;
+begin
+    loop
+        select
+            accept hayNota(b: out boolean)
+                b = (not empty(c));
+            end hayNota
+            medico.dejarNota(c.pop());
+        or
+            when hayNota'count = 0 => 
+                accept dejarNota(p: in text)
+                    c.push(p);
+                end dejarNota;
+        end select
+    end loop
+end escritorio;
+
+
+task body persona is
+    int cant = 0;
+begin
+    loop(cant < 3)
+        select
+            medico.paciente();
+            cant = 3;
+        or delay 300
+            cant++;
+            delay 600;
+        end select
+    end loop
+end persona
+
+
+task body enfermera is
+    text nota;
+begin
+    loop
+        generar(nota);
+        select 
+            medico.pedidoEnfermera(nota);
+        else
+            escritorio.dejarNota(nota);
+        end select
+    end loop
+end enfermera
+
+begin
+    null;
+eng ejer4;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
