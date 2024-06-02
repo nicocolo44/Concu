@@ -47,8 +47,8 @@ begin
                                                 atiendo pedido
                                         end pedidoEnfermera;
         or
-            paciente'count = 0 && pedidoEnfermera'count = 0 =>
-                escritorio.HayNota(b);
+            when paciente'count = 0 && pedidoEnfermera'count = 0 =>
+                escritorio.HayNota(b); //NO está bien
                 if(b)
                     accept dejarNota(n: in text)
                         resuelvoNota
