@@ -23,12 +23,11 @@ task type enfermera;
 task medico is
     entry paciente();
     entry pedidoEnfermera(p: in text);
-    entry dejarNota(n: in text);
+    entry darAlMedicoNota(n: in text);
 end medico;
 
 task escritorio is
     entry dejarNota(p: in text);
-    entry hayNota(H: out boolean);
 end escritorio;
 
 personas: aray(1..P) of persona;
@@ -36,6 +35,7 @@ enfermeras: array(1..E) of enfermera;
 
 task body medico is
     boolean b;
+    text pedido;
 begin
     loop
         select
@@ -44,16 +44,15 @@ begin
             end paciente
         or
             when paciente'count = 0 => accept pedidoEnfermera(p: in text)
-                                                atiendo pedido
+                                                pedido = p;
                                         end pedidoEnfermera;
+            //resuelvo pedido
         or
             when paciente'count = 0 && pedidoEnfermera'count = 0 =>
-                escritorio.HayNota(b); //NO está bien
-                if(b)
-                    accept dejarNota(n: in text)
-                        resuelvoNota
+                    accept darAlMedicoNota(n: in text)
+                        pedido = p:
                     end dejarNota
-                end if
+            //resuelvo pedido
         end select
     end loop
 end medico;
@@ -64,15 +63,13 @@ task body escritorio is
 begin
     loop
         select
-            accept hayNota(b: out boolean)
-                b = (not empty(c));
-            end hayNota
-            medico.dejarNota(c.pop());
-        or
-            when hayNota'count = 0 => 
+            medico.darAlMedicoNota(c.pop()); //Si no hay nada devuelve null (funcion que acabo de inventar)
+        else
+            select
                 accept dejarNota(p: in text)
                     c.push(p);
                 end dejarNota;
+            end select
         end select
     end loop
 end escritorio;

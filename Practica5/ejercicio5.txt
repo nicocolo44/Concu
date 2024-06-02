@@ -26,14 +26,29 @@ begin
 end servidor
 
 task body usuario is
-    hayError: boolean;
+    hayError, Reenviar: boolean;
     doc: text;
 begin
     doc = generarDoc();
-    servidor.trabajo(doc, hayError);
-    loop(hayError)
-        corregir(doc);
-        servidor.trabajo(doc, hayError);
+
+     select
+            servidor.trabajo(doc, hayError);
+        or delay(120)
+            delay(60);
+            reenviar = true;
+    end select
+
+    loop(hayError || reenviar)
+        if(not reenviar)
+            corregir(doc);
+        end if;
+        select
+            servidor.trabajo(doc, hayError);
+            reenviar = false;
+        or delay(120)
+            delay(60)
+            reenviar = true;
+        end select
     end loop;
 end usuario;
         
