@@ -7,6 +7,8 @@ está todo bien el usuario se retira. Cuando un usuario envía un pedido espera 
 minutos a que sea recibido por el servidor, pasado ese tiempo espera un minuto y vuelve a
 intentarlo (usando el mismo documento).
 
+process ejer5
+
 task type usuario;
 
 task servidor is
@@ -30,18 +32,8 @@ task body usuario is
     doc: text;
 begin
     doc = generarDoc();
-
-     select
-            servidor.trabajo(doc, hayError);
-        or delay(120)
-            delay(60);
-            reenviar = true;
-    end select
-
+    hayError = true;
     loop(hayError || reenviar)
-        if(not reenviar)
-            corregir(doc);
-        end if;
         select
             servidor.trabajo(doc, hayError);
             reenviar = false;
@@ -49,8 +41,12 @@ begin
             delay(60)
             reenviar = true;
         end select
+        if(not reenviar)
+            corregir(doc);
+        end if;
     end loop;
 end usuario;
         
-
-end usuario;
+begin 
+null
+end ejer5;
