@@ -1,0 +1,142 @@
+
+Resolver con PMA (Pasaje de Mensajes Asincrónico) la siguiente situación. En una ferretería hay 2 empleados que atienden a C clientes de acuerdo al orden de llegada. El cliente debe esperar a ser atendido para irse. Nota: maximizar la concurrencia
+
+chan llegue(int);
+chan termino;
+
+process cliente[id: 1..C]{
+    send llegue(id);
+    receive termino[id]();
+}
+
+process empleado[1..2]{
+    while(true){
+        receive llegue(auxId);
+        //atenderlo
+        send termino[auxId]();
+    }
+}
+
+
+Resolver con PMS (Pasaje de Mensajes Sincrónico) la siguiente situación. Una oficina de correo recibe paquetes para dos destinos diferentes (Norte y Sur), existe un encargado que recibe los paquetes y los distribuye según el destino. Existen dos camiones (uno para cada destino) que llegan, cargan todos los paquetes que hay en el momento para el destino correspondiente y los llevan. Nota: maximizar la concurrencia.
+
+
+
+
+process paquete[id: 1..P]{
+    text destino = generarDestino();
+    empleado!llegoPaquete(destino, id);
+}
+
+process empleado{
+    text destinoA;
+    int auxId;
+    cola cs, cn;
+    while(true){
+        if empleado[*]?llegoPaquete(destinoA, auxId) =>                     //No me acuerdo como se le daba prioridad a uno por sobre otro
+            if(destinoA = "sur") cs.push(auxId);
+            else cn.push(auxId);
+        [] camionetaN?llegue() =>                                           //podría fijarme que haya por lo menos algun pedido (no lo explicita la consigna pero es ponerle una guarda)
+            while(not empty(cn)) camionetaN!mandarPedido(cn.pop, true);     //Se podría no repetir camionetaN y camionetaS pero me dió paja
+            camionetaN!mandarPedido(null, false);
+        [] camionetaS?llegue() =>
+            while(not empty(cs)) camionetaS!mandarPedido(cs.pop, true);
+            camionetaS!mandarPedido(null, false);
+    }
+}
+
+
+process camionetaN{
+    cola c;
+    bool continua;
+    int auxId;
+    while(true){
+        empleado!llegue();
+        empleado?mandarPedido(auxId, continua);
+        while(continua){
+            c.push(auxId);
+            empleado?mandarPedido(auxId, continua);
+        }
+        //Hacer viaje y volver
+    }
+}
+
+
+
+
+
+
+
+Resolver con ADA la siguiente situación. Un servidor de impresión tiene dos impresoras (color y negra). Existen C clientes que mandan a imprimir al servidor UN documento cada uno (cada uno ya sabe si debe imprimir en color o blanco/negro) y esperan a que se termine de imprimir su documento. El servidor atiende los pedidos de acuerdo a las siguientes condiciones:
+
+Si el documento es en color, lo debe imprimir en la impresora color.
+Si el documento es en blanco y negro, lo debe imprimir en la impresora negra, o bien en la impresora color si no hubiese trabajos en color pendientes por ser impresos.
+Nota: no es necesario que las impresoras y el servidor terminen su ejecución.
+
+
+procedure impresoras
+
+task type cliente;
+task imC;
+task imByN;
+
+task servidor
+    entry peticionImprimir(doc: in text, tipo: in text); 
+    entry impresoraLibreC(doc: out text);
+    entry impresoraLibreByN(doc: out text);
+end servidor;
+
+clientes: array(1..C) of cliente;
+
+task body cliente is
+    doc: text;
+    tipo: text;
+begin
+
+    doc := generarDoc();
+    tipo := generarTipo();
+    servidor.peticionImprimir(doc, tipo);
+    
+end cliente
+
+task body servidor is
+    docA: text;
+    tipoA: text;
+    colaColor: cola;
+    colaByN: cola;
+begin
+    loop
+        select
+            accept peticionImprimir(doc: in text; tipo in text) do
+                if(tipo = "color") colaColor.push(doc);
+                else colaByN.push(doc)
+            end peticionImprimir
+        or
+            when not empty(colaColor) || not empty(colaByN); accept impresoraLibreC(doc: in text) do
+                if(empty(colaColor)) doc := colaByN.pop();
+                else doc:= colaColor.pop();
+            end impresoraLibreC
+        or
+            when not empty(colaByn); accept impresoraLibreByN(doc: in text) do
+                doc:= colaByn.pop();
+            end impresoraLibreByN
+        end select                
+    end loop
+end servidor
+
+
+task body imC is
+    docAux: text;
+begin
+    loop
+        servidor.impresoraLibreC(docAux);   //Tendría que avisarle al proceso cuando termina, para eso necesito pasar el ID y desspués hacerle un entry call al cliente
+        //imprimir
+                                            //Acá sería ese entry call 
+    end loop
+end imC
+
+
+begin
+    null
+end impresoras
+

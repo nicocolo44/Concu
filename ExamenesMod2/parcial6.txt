@@ -1,0 +1,61 @@
+Resolver con ADA el siguiente problema. Se quiere modelar el funcionamiento de un banco, al cual llegan
+clientes que deben realizar un pago y llevarse su comprobante. Los clientes se dividen entre los regulares y los
+premium, habiendo R clientes regulares y P clientes premium. Existe un único empleado en el banco, el cual
+atiende de acuerdo al orden de llegada, pero dando prioridad a los premium sobre los regulares. Si a los 30
+minutos de llegar un cliente regular no fue atendido, entonces se retira sin realizar el pago. Los clientes premium
+siempre esperan hasta ser atendidos.
+
+
+procedure banco is
+
+task type clienteP;
+
+task type clienteR;
+
+task empleado is
+    entry clientePr(pago: in int; comprobante: out text);
+    entry clienteRe(pago: in int; comprobante: out text);
+end empleado;
+
+clientesR: array(1..R) of clienteR;
+clientesP: array(1..P) of clienteP;
+
+task body clienteP is
+    pago: int;
+    comprobante: text;
+begin
+    pago:= generarPago();
+    empleado.clientePr(pago, comprobante);
+end clienteP;
+
+task body clienteR is
+    pago: int;
+    comprobante: text;
+begin
+    pago:= generarPago();
+    select
+        empleado.clienteRe(pago, comprobante);
+    or delay(180)
+        null;
+    end select;
+end clienteP;
+
+task body empleado is
+begin
+    loop
+        select
+            accept clientePr(pago: in int; comprobante: out text) do
+                comprobante = generarComprobante(pago);
+            end clientePr
+        or
+            when(clientePr'count == 0) => accept clienteRe(pago: in int; comprobante: out text) do
+                comprobante = generarComprobante(pago);
+            end clienteRe
+        end select
+    end loop
+end empleado
+
+
+begin
+    null;
+end banco;
