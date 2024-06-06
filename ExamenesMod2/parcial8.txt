@@ -1,0 +1,83 @@
+2. Resolver con ADA el siguiente problema. Se debe controlar el acceso a una base de datos. Existen L procesos Lectores y E
+procesos Escritores que trabajan indefinidamente de la siguiente manera:
+• Escritor: intenta acceder para escribir, si no lo logra inmediatamente, espera 1 minuto y vuelve a intentarlo de la misma
+manera.
+• Lector: intenta acceder para leer, si no lo logro en 2 minutos, espera 5 minutos y vuelve a intentarlo de la misma manera.
+Un proceso Escritor podrá acceder si no hay ningún otro proceso usando la base de datos; al acceder escribe y sale de la BD. Un
+proceso Lector podrá acceder si no hay procesos Escritores usando la base de datos; al acceder lee y sale de la BD. Siempre se le
+debe dar prioridad al pedido de acceso para escribir sobre el pedido de acceso para leer.
+
+procedure bd is
+
+task type lector;
+task type escritor;
+
+task admin is
+    entry permisoLect();
+    entry permisoEsc();
+    entry liberoLect();
+    entry liberoEsc();
+end admin
+
+
+lectores: array(1..L) of lector;
+escritores: array(1..E) of escritor;
+
+task body lector is
+    query: text;
+begin
+    query:= generarQuery();
+    loop
+        select
+            admin.permisoLect();
+            leer(query);
+            admin.liberoLect();            
+            query:= generarQuery();
+        else delay(120)
+            delay(5*60);
+        end select;
+    end loop;
+end lector;
+
+
+task body escritor is 
+    query: text;
+begin
+    query:= generarQuery();
+    loop
+        select
+            admin.permisoEsc();
+            escribir(query);
+            admin.liberoEsc();
+            query:= generarQuery();
+        else delay(60)
+            null;
+        end select
+    end loop;
+end escritor;
+
+task body admin is
+    cantLec: int;
+begin
+    loop
+        select
+            when cantLec = 0 => accept permisoEsc() do
+                accept liberoEsc();
+            end permisoEsc;
+        or
+            when permisoEsc'count = 0 => accept permisoLect() do //Supongo que aunque haya procesos leyendo no tengo que dejar entrar a nadie más si hay un escritor
+                cantLec++;
+            end permisoLect;
+        or
+            accept liberoLect() do
+                cantLec--;
+            end liberoLect;
+        end select;
+    end loop
+
+end admin;
+
+
+begin
+    null;
+end;

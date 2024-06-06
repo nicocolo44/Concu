@@ -29,3 +29,64 @@ process admin(){
         }
     }
 }
+
+2) En un negocio de cobros digitales hay P personas que deben pasar por la única caja de cobros para realizar el pago de
+sus boletas. Las personas son atendidas de acuerdo con el orden de llegada, teniendo prioridad aquellos que deben
+pagar menos de 5 boletas de los que pagan más. Adicionalmente, las personas embarazadas y los ancianos tienen
+prioridad sobre los dos casos anteriores. Las personas entregan sus boletas al cajero y el dinero de pago; el cajero les
+devuelve el vuelto y los recibos de pago. Implemente un programa que permita resolver el problema anterior usando
+ADA.
+
+
+procedure negocio is
+
+    task type persona;
+
+    task type empleado is
+        entry pedido(b: in Boletas, d: in int, v: out int, r: out Recibos);
+        entry pedidoMenos5(b: in Boletas, d: in int, v: out int, r: out Recibos);
+        entry pedidoAyE(b: in Boletas, d: in int, v: out int, r: out Recibos);
+    end empleado
+
+    personas: array(1..P) of persona
+
+    task type persona is
+        cantB: int;
+        b: Boletas;
+        r: Recibos;
+        d: int;
+        AyE: boolean;
+        v: int;
+    begin
+        AyE := soyAoE();
+        if(AyE) then empleado.pedidoAyE(b,d, v, r);
+        else if(cantB < 5) then empleado.pedidoMenos5(b,d, v, r);
+        else empleado.pedido(b,d, v, r);
+        end if;
+    end persona
+
+    task type empleado is
+    begin
+        for i in 1..P loop
+            select
+                accept pedidoAyE(b: in Boletas, d: in int, v: out int, r: out Recibos) do
+                    v:= generarVuelto(d);
+                    r:= generarRecivos(b);
+                end pedidoAyE
+            or
+                when peidoAyE'count = 0 => accept pedidoMenos5(b: in Boletas, d: in int, v: out int, r: out Recibos) do
+                    v:= generarVuelto(d);
+                    r:= generarRecivos(b);
+                end pedidoMenos5
+            or
+                when peidoAyE'count = 0 && pedidoMenos5'count = 0 => accept pedido(b: in Boletas, d: in int, v: out int, r: out Recibos) do
+                    v:= generarVuelto(d);
+                    r:= generarRecivos(b);
+                end pedido
+            end select;
+        end loop;
+    end empleado;
+
+begin
+    null
+end negocio

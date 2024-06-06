@@ -1,0 +1,73 @@
+Resolver con Pasaje de Mensajes Sincrónicos (PMS) el siguiente problema. En un torneo de programación
+hay 1 organizador, N competidores y S supervisores. El organizador comunica el desafío a resolver a cada
+competidor. Cuando un competidor cuenta con el desafío a resolver, lo hace y lo entrega para ser evaluado.
+A continuación, espera a que alguno de los supervisores lo corrija y le indique si está bien. En caso de tener
+errores, el competidor debe corregirlo y volver a entregar, repitiendo la misma metodología hasta que llegue
+a la solución esperada. Los supervisores corrigen las entregas respetando el orden en que los competidores
+van entregando. Nota: maximizar la concurrencia y no generar demora innecesaria. 
+
+
+
+process competidor[id: 1..N]{
+    text desafio, desafioCompletado;
+    bool termine = false;
+    organizador!llegueC(id);
+    organizador?recibirDesafio(desafio);
+    desafioCompletado = hacer(desafio);
+    while(not termine){
+        coord!termine(desafioCompletado, id);
+        supervisor[*]?recibirNota(termine);
+        if(not termine) desafioCompletado = corregir(desafioCompletado);
+    }
+}
+
+process coord{
+    cola C;
+    text desafioAux;
+    int auxId;
+    while(true){
+        if
+            competidor[*]?termine(desafioAux, auxId) => c.push(desafioAux, auxId);
+        []  not empty(c); supervisor[*]?llegue(auxId) => supervisor[auxId]!recibirDesafio(c.pop());
+        fi
+    }
+}
+
+
+process organizador{
+    int auxId;
+    for(i: 1..N) {
+        competidor[*]?llegueC(auxId);
+        competidor[auxId]!recibirDesafio(generarDesafio());
+    }
+}
+
+process supervisor[id: 1..S]{
+    text desafioACorregir;
+    int auxId;
+    bool termino;
+    while(true){
+        coord!llegue(id);
+        coord?recibirDesafio(desafioACorregir, auxId);
+        termino = corregir(desafioACorregir);
+        competidor[auxId]!recibirNota(termino);
+    }
+}
+
+
+process coord{
+
+}
+
+
+2. Resolver con ADA el siguiente problema. Una empresa de venta de calzado cuenta con S sedes. En la oficina
+central de la empresa se utiliza un sistema que permite controlar el stock de los diferentes modelos, ya que
+cada sede tiene una base de datos propia. El sistema de control de stock funciona de la siguiente manera:
+dado un modelo determinado, lo envía a las sedes para que cada una le devuelva la cantidad disponible en
+ellas; al final del procesamiento, el sistema informa el total de calzados disponibles de dicho modelo. Una
+vez que se completó el procesamiento de un modelo, se procede a realizar lo mismo con el siguiente modelo.
+Nota: suponga que existe una función DevolverStock(modelo,cantidad) que utiliza cada sede donde recibe
+como parámetro de entrada el modelo de calzado y retorna como parámetro de salida la cantidad de pares
+disponibles. Maximizar la concurrencia y no generar demora innecesaria.
+
+

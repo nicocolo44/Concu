@@ -127,4 +127,3 @@ llegada de los mismos), lo resuelve y devuelve el resultado al cliente correspon
 Nota: suponga que existe una función Resolver(texto) que utiliza cada Servidor para
 resolver el análisis de una secuencia de tipo texto y devuelve el resultado que es un
 entero.
-
