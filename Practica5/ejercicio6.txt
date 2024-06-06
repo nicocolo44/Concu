@@ -1,0 +1,71 @@
+6. En una playa hay 5 equipos de 4 personas cada uno (en total son 20 personas donde cada
+una conoce previamente a que equipo pertenece). Cuando las personas van llegando
+esperan con los de su equipo hasta que el mismo esté completo (hayan llegado los 4
+integrantes), a partir de ese momento el equipo comienza a jugar. El juego consiste en que
+cada integrante del grupo junta 15 monedas de a una en una playa (las monedas pueden ser
+de 1, 2 o 5 pesos) y se suman los montos de las 60 monedas conseguidas en el grupo. Al
+finalizar cada persona debe conocer grupo que más dinero junto. Nota: maximizar la
+concurrencia. Suponga que para simular la búsqueda de una moneda por parte de una
+persona existe una función Moneda() que retorna el valor de la moneda encontrada.
+
+
+procedure ejer6 is
+
+    task type grupo is
+        entry llegue();
+        entry liberarBarrera();
+        entry termine(cantidadM: in int);
+    end barrera;
+
+    task type persona;
+
+    task maximo is
+        entry terminoGrupo(cantidadM: in int);
+        entry informar(maximo: out int);
+    end maximo
+
+    personas: array(1..20) OF persona;
+    grupos: array(1..5) OF grupo;
+
+
+    task body persona is
+        g: int;
+        monedas: int;
+        cantMax: int;
+    begin
+        monedas = 0;
+        g = determinarGrupo();
+        grupos[g].llegue();
+        grupos[g].liberarBarrera();
+        for(i: 1..15) monedas += Moneda();
+        grupo[g].termine(monedas);
+        maximo.informar(cantMax);
+    end persona
+
+    task body grupo is
+        cantTot: int;
+    begin
+        cantTot = 0;
+        for(i: 1..4) accept llegue;
+        for(i: 1..4) accept liberarBarrera;
+        for(i: 1..4) accept termine(monedas: in int)
+                        cantTot+= monedas;
+                    end termine
+        maximo.terminoGrupo(cantTot);
+    end;
+
+    task body maximo is
+        maximo: int;
+    begin
+        maximo = -1;
+        for(i: 1..5)    accept terminoGrupo(cantM: in int)
+                            if(maximo < cantM) maximo = cantM;
+                        end terminoGrupo;
+        for(i: 1..20)   accept informar(cantMax: out int)
+                            cantMax = maximo;
+                        end informar;
+    end
+
+begin
+    null;
+end

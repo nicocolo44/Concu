@@ -1,0 +1,130 @@
+1. Resolver con PMS (Pasaje de Mensajes SINCRÓNICOS) el siguiente problema. En
+una carrera hay C corredores, 3 Coordinadores. Al llegar los corredores deben
+dirigirse a los coordinadores para que cualquiera de ellos le dé el número de “chaleco”
+con el que van a correr. Los coordinadores atienden a los corredores de acuerdo al
+orden de llegada (cuando un coordinador está libre atiende al primer corredor que está
+esperando). Cuando todos los corredores ya recibieron su número de “chaleco”
+comienza la carrera. Cuando un corredor termina de correr busca la posición en que
+termino la carrera y se retira. Nota: maximizar la concurrencia.
+
+process corredor[id: 1..C]{
+    int c,num, posFinal;
+    admin!llegue(id);
+    admin?miCoord(c);
+    coordinador[c]?numero(num);
+    admin!estoyListo(); 
+    admin!empezarCarrera();
+    //Corro carrera
+    admin!termineCarrera();
+    admin?damePos(posFinal);
+}
+
+process coordinador[id: 1..3]{
+    while(true){
+        admin!LlegoCoord(id);
+        admin?corredor(idCorr);
+        //genero el numero
+        corredor[idCorr]!numero(num);
+    }
+}
+
+process admin{
+    cola c;
+    int llegados = 1;
+    for(i: 1..3*C){
+        do corredor[*]?llegue(auxId) => c.push(auxId);
+        [] not empty(c); coordinador[*]?LlegoCoord(auxId) => corredor[c.pop()]!miCoord(auxId);
+        [] corredor[*]?estoyListo();
+        od
+    }
+    for(i:1..2*C){
+        do corredor[*]?empezarCarrera();
+        [] corredor[*]?termineCarrera(id) => corredor[id]!damePos(llegados++);
+    }
+
+}
+
+
+2. Resolver con PMA (Pasaje de Mensajes ASINCRÓNICOS) el siguiente problema.
+En una oficina hay 3 empleados y P personas que van para ser atendidas para iniciar
+un trámite, o para buscar su resultado. Cuando una persona llega espera hasta ser
+atendido por cualquiera de los empleados, le indica que necesita (iniciar trámite o
+buscar el resultado de un trámite) y espera hasta que terminan de atenderlo y le
+devuelven: un número de trámite en el primer caso, un dictamen en el segundo caso.
+Los empleados atienden las solicitudes en orden de llegada; si no hay personas
+esperando, durante 5 minutos resuelven trámites pendientes (simular el proceso de
+resolver trámites pendientes por medio de un delay). Cuando se han atendido a las P
+personas los empleados se retiran. Nota: no generar demora innecesaria; cada persona
+hace sólo un pedido y termina; los empleados deben terminar.
+
+chan llegada(int, text);
+chan numeroTramite[1..P](int);
+chan dictamen[1..P](text);
+chan terminado;
+
+process persona[id: 1..P]{
+    text tipoTramite, dct;
+    int nro;
+    send llegada(id, tipoTramite);
+    send aviso();
+    if(tipoTramite == "iniciar"){
+        receive numeroTramite[id](nro);
+    }else{
+        receive dictamen[id](dct);
+    }
+}
+
+
+process empleado[id: 1..3]{
+    int idCli = -1;
+    text tipoTramite;
+    while(idCli != -2){
+        send empleadoLibre(id);
+        send aviso();
+        receive cliente[id](idCli, tipoTramite);
+        if(idCli == -2) {}
+        else if(idCli != -1){
+            if(tipoTramite == "iniciar") send numeroTramite[idCli](generarNum());
+            else send dictamen[idCli](generarDictamen());
+        }else{
+            delay(5*60);
+        }
+    }
+}
+
+process coordinador{
+    cola c;
+    int atendidos = 0;
+    while(atendidos < N){
+        receive aviso();
+        if 
+            not empty(llegada) => 
+                receive llegada(auxId, tipoTramite)
+                c.push(auxId, tipoTramite);
+        []  not empty(empleadoLibre) =>
+                receive empleadoLibre(auxId);
+                if(empty(c)) send cliente[auxId](-1, Null);
+                else{
+                    send cliente[auxId](c.pop());
+                    atendidos++;
+                }
+        fi
+    }
+    for(i:1..3) send cliente[i](-2, null);
+}
+
+
+
+
+3. Resolver con ADA el siguiente problema. Hay una empresa de análisis genético. Hay N
+clientes que sucesivamente envían secuencias de ADN a la empresa para que sean
+analizadas y esperan los resultados para poder envían otra secuencia a analizar. Para
+resolver estos análisis la empresa cuenta con 4 servidores que van rotando su uso para
+no exigirlos de más (en todo momento uno está trabajando y los otros descansando);
+cada 6 horas cambia en servidor con el que se trabaja siguiendo un orden circular (1-2-3-
+4-1-2...). El servidor que está trabajando, toma un pedido (de acuerdo al orden de
+llegada de los mismos), lo resuelve y devuelve el resultado al cliente correspondiente.
+Nota: suponga que existe una función Resolver(texto) que utiliza cada Servidor para
+resolver el análisis de una secuencia de tipo texto y devuelve el resultado que es un
+entero.
+

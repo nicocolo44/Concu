@@ -1,0 +1,115 @@
+1) Resolver con PMA (Pasaje de Mensajes ASINCRÓNICOS) el siguiente problema. Simular la atención en un locutorio con 10 cabinas telefónicas, que tiene un empleado que se encarga de atender a los clientes. Hay N clientes que al llegar esperan hasta que el empleado les indica a qué cabina ir, la usan y luego se dirigen al empleado para pagarle. El empleado atiende a los clientes en el orden en que hacen los pedidos, pero siempre dando prioridad a los que terminaron de usar la cabina. Nota: maximizar la concurrencia; suponga que hay una función Cobrar() llamada por el empleado que simula que el empleado le cobra al cliente.
+
+chan llegue(int);
+chan cabina[1..N](int);
+chan pagar(int);
+
+process empleado{
+    int cab, auxId;
+    cola cabinas = {1,2 ..., 10};
+    while(true){
+        if(not empty(pagar) || empty(cabinas)){
+            recieve pagar(cab, id);
+            cobrar(id);
+            cabinas.push(cab);
+        }
+        [](not empty(llegue) && not empty(cabinas)){
+            recieve llegue(auxId);
+            send cabina[auxId](cabinas.pop());
+        }
+        fi
+    }
+}
+
+process persona[id: 1..N]{
+    send llegue(id);
+    recieve cabina[id](cab);
+    usarCabina(cab);
+    send pagar(cab,id);
+}
+
+
+2) Resolver con ADA la siguiente situación. En una oficina hay un empleado y P personas que van para ser atendidas para realizar un trámite. Cuando una persona llega espera a lo sumo 20 minutos a que comience a atenderla el empleado para resolver el trámite que va a hacer, y luego se va; si pasó el tiempo se retira sin realizar el trámite. El empleado atiende las solicitudes en orden de llegada. Cuando las P personas se han retirado el empleado también se retira. Nota: cada persona hace sólo un pedido y termina; suponga que existe una función Atender() llamada por el empleado que simula que el empleado está resolviendo el trámite del cliente; todas las tareas deben terminar.
+
+
+procedure ej2 is
+
+task empleado is
+    entry atencion();
+    entry terminamos();
+end empleado;
+
+task type persona;
+
+task contador is
+    entry termine();
+end contador;
+
+personas: Array(1..P) of persona;
+begin
+task body persona is
+    select
+        empleado.atencion();
+    or delay(60*20)
+        null;
+    end select
+    contador.termine();
+end persona;
+
+task body empleado
+terminado: bool;
+begin
+    terminado = false;
+    while(not terminado)loop
+        select  
+            accept atencion();
+        or
+            when atencion'count = 0 => accept terminamos(); //No sé si suma
+            terminado = true;
+        end select
+    end loop
+end empleado
+
+
+task body contador
+begin
+    for(i: 1..P) accept termine();
+    empleado.terminamos();
+end contador
+
+begin
+    null;
+end ej2
+
+
+3) EJERCICIO SÓLO PARA ING. EN COMPUTACIÓN. Resolver con PMS (Pasaje de Mensajes SINCRÓNICOS) el siguiente problema. Simular la atención de una estación de servicio con un único surtidor que tiene un empleado que atiende a los N clientes de acuerdo al orden de llegada. Cada cliente espera hasta que el empleado termina de cargarle combustible y se retira. Nota: cada cliente carga combustible sólo una vez; todos los procesos deben terminar.
+
+
+
+process cliente[id: 1..N]{
+    coord!llegue(id);
+    surtidor?termine();
+}
+
+
+process surtidor{
+    int auxId;
+    for(i:1..N){
+        coord!libre();
+        coord?siguiente(auxId);
+        //cargo nasta
+        cliente[auxId]!termine();
+    }
+}
+
+process coord{
+    int auxId, contador = 0;
+    cola c;
+    while(contador < N){
+        do
+            (empty(libre) || empty(c));cliente[*]?llegue(auxId) => c.push(auxId); contador++;
+            (not empty(c)); surtidor?libre() => surtidor!siguiente(c.pop()); 
+        od                                     
+    }
+
+}
